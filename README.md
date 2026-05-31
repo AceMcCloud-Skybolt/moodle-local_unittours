@@ -28,6 +28,22 @@ The plugin is intended to solve the limitations of native Moodle User tours for 
 - Adds relaunch and reset-completion controls for testing.
 - Adds optional per-step audio text with browser speech playback.
 
+## Screenshots
+
+![Course-owned tour builder](docs/screenshots/01-dashboard-overview.png)
+
+![Target health and audio status](docs/screenshots/02-step-health-audio-status.png)
+
+![Course menu entry](docs/screenshots/03-course-menu-entry.png)
+
+![Audio step editor](docs/screenshots/04-audio-step-editor.png)
+
+![Visual target picker](docs/screenshots/05-visual-target-picker.png)
+
+![Student-facing tour with audio](docs/screenshots/06-student-tour-audio.png)
+
+![User-facing tour result](docs/screenshots/07-user-facing-tour-result.png)
+
 ## Target model
 
 Steps should prefer semantic Moodle targets before falling back to CSS selectors:
