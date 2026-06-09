@@ -40,6 +40,7 @@ class edit_step extends \moodleform {
             target::SECTION => get_string('target_section', 'local_unittours'),
             target::BLOCK => get_string('target_block', 'local_unittours'),
             target::COURSE_INDEX => get_string('target_course_index', 'local_unittours'),
+            target::COURSE_NAVIGATION => get_string('target_course_navigation', 'local_unittours'),
             target::PAGE_REGION => get_string('target_page_region', 'local_unittours'),
             target::SELECTOR => get_string('target_selector', 'local_unittours'),
         ]);

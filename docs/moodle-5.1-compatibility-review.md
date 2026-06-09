@@ -84,9 +84,16 @@ Recommended follow-up: explicitly test browser speech behavior in Moodle App web
 
 ## Suggested next development pass
 
-1. Add course deletion cleanup.
-2. Add semantic course navigation targets.
-3. Add group audience support.
-4. Improve keyboard/focus accessibility in the player.
-5. Add Playwright or Behat-style smoke coverage for Moodle 5.1 course pages.
+Completed in the production-readiness pass:
 
+1. Added course deletion cleanup.
+2. Added semantic course navigation targets.
+3. Added group audience support.
+4. Improved keyboard/focus accessibility in the player.
+
+Remaining recommended dev/staging checks:
+
+1. Add Playwright or Behat-style smoke coverage for Moodle 5.1 course pages.
+2. Run full backup/restore testing with group audience tours.
+3. Test Moodle App/webview playback and audio behaviour.
+4. Confirm staff preview behaviour for group-specific tours matches Murdoch policy.

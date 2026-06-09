@@ -3,6 +3,7 @@ define([], function() {
     var launcher = null;
     var speechState = null;
     var highlightClass = 'local-unittours-highlight';
+    var previouslyFocused = null;
 
     var storageKey = function(payload, tour) {
         return 'local_unittours_completed_' + payload.userid + '_' + payload.courseid + '_' + tour.id;
@@ -53,6 +54,10 @@ define([], function() {
         if (active.popover) {
             active.popover.remove();
         }
+        if (previouslyFocused && typeof previouslyFocused.focus === 'function') {
+            previouslyFocused.focus();
+        }
+        previouslyFocused = null;
         active = null;
     };
 
@@ -131,6 +136,71 @@ define([], function() {
         return template.content.firstChild;
     };
 
+    var normaliseText = function(text) {
+        return (text || '').trim().toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, '_');
+    };
+
+    var clickMoreMenu = function() {
+        var candidates = document.querySelectorAll('.secondary-navigation a, .secondary-navigation button, [role="menuitem"]');
+        for (var i = 0; i < candidates.length; i++) {
+            if (normaliseText(candidates[i].textContent) === 'more') {
+                candidates[i].click();
+                return true;
+            }
+        }
+        return false;
+    };
+
+    var findNavigationTarget = function(targetref) {
+        var candidates = document.querySelectorAll('.secondary-navigation a, .secondary-navigation button, [role="menuitem"]');
+        for (var i = 0; i < candidates.length; i++) {
+            if (normaliseText(candidates[i].textContent) === targetref) {
+                return candidates[i];
+            }
+        }
+
+        if (targetref === 'unit_tours' && clickMoreMenu()) {
+            candidates = document.querySelectorAll('.secondary-navigation a, .secondary-navigation button, [role="menuitem"]');
+            for (var j = 0; j < candidates.length; j++) {
+                if (normaliseText(candidates[j].textContent) === targetref) {
+                    return candidates[j];
+                }
+            }
+        }
+
+        return null;
+    };
+
+    var focusableElements = function(container) {
+        return Array.from(container.querySelectorAll(
+            'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+        )).filter(function(element) {
+            return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
+        });
+    };
+
+    var trapFocus = function(event, popover) {
+        if (event.key !== 'Tab') {
+            return;
+        }
+
+        var focusable = focusableElements(popover);
+        if (!focusable.length) {
+            event.preventDefault();
+            return;
+        }
+
+        var first = focusable[0];
+        var last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+            event.preventDefault();
+            last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+            event.preventDefault();
+            first.focus();
+        }
+    };
+
     var findTarget = function(step) {
         var selectors = [];
 
@@ -147,6 +217,8 @@ define([], function() {
         } else if (step.targettype === 'course_index' && step.targetref) {
             selectors.push('[data-for="section"][data-id="' + step.targetref + '"]');
             selectors.push('[data-for="cm"][data-id="' + step.targetref + '"]');
+        } else if (step.targettype === 'course_navigation' && step.targetref) {
+            return findNavigationTarget(step.targetref);
         } else if (step.targettype === 'page_region' && step.targetref) {
             selectors.push('[data-region="' + step.targetref + '"]');
             selectors.push('#' + step.targetref);
@@ -238,8 +310,8 @@ define([], function() {
         var backdisabled = index === 0 ? ' disabled' : '';
 
         var popover = htmlToElement(
-            '<section class="local-unittours-popover" role="dialog" aria-modal="true">' +
-                '<h3></h3>' +
+            '<section class="local-unittours-popover" role="dialog" aria-modal="true" tabindex="-1">' +
+                '<h3 id="local-unittours-title"></h3>' +
                 '<div class="local-unittours-content"></div>' +
                 '<div class="local-unittours-progress"></div>' +
                 '<div class="local-unittours-actions">' +
@@ -252,6 +324,7 @@ define([], function() {
         );
 
         popover.querySelector('h3').textContent = step.title;
+        popover.setAttribute('aria-labelledby', 'local-unittours-title');
         popover.querySelector('.local-unittours-content').innerHTML = step.content;
         popover.querySelector('.local-unittours-progress').textContent = counter;
         popover.querySelector('.local-unittours-skip').textContent = payload.strings.skip;
@@ -261,6 +334,16 @@ define([], function() {
         document.body.appendChild(popover);
 
         positionPopover(popover, target, step.placement);
+        previouslyFocused = previouslyFocused || document.activeElement;
+        popover.focus();
+        popover.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                markCompleted(payload, tour, 'skipped');
+                removeActive();
+                return;
+            }
+            trapFocus(event, popover);
+        });
 
         popover.querySelector('.local-unittours-skip').addEventListener('click', function() {
             markCompleted(payload, tour, 'skipped');

@@ -24,6 +24,9 @@ final class target_resolver {
             case target::COURSE_INDEX:
                 return self::course_index($step, $course);
 
+            case target::COURSE_NAVIGATION:
+                return self::course_navigation($step);
+
             case target::PAGE_REGION:
                 return self::page_region($step);
 
@@ -112,6 +115,28 @@ final class target_resolver {
         }
 
         return self::result(true, $step->targetref, get_string('target_course_index', 'local_unittours'));
+    }
+
+    private static function course_navigation(\stdClass $step): \stdClass {
+        if (empty($step->targetref)) {
+            return self::result(false, get_string('target_missingref', 'local_unittours'));
+        }
+
+        return self::result(true, self::navigation_label($step->targetref), get_string('target_course_navigation', 'local_unittours'));
+    }
+
+    private static function navigation_label(string $targetref): string {
+        $labels = [
+            'course' => get_string('navtarget_course', 'local_unittours'),
+            'settings' => get_string('navtarget_settings', 'local_unittours'),
+            'participants' => get_string('navtarget_participants', 'local_unittours'),
+            'grades' => get_string('navtarget_grades', 'local_unittours'),
+            'activities' => get_string('navtarget_activities', 'local_unittours'),
+            'more' => get_string('navtarget_more', 'local_unittours'),
+            'unit_tours' => get_string('unittours', 'local_unittours'),
+        ];
+
+        return $labels[$targetref] ?? $targetref;
     }
 
     private static function page_region(\stdClass $step): \stdClass {

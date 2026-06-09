@@ -5,6 +5,9 @@ namespace local_unittours\local;
 
 defined('MOODLE_INTERNAL') || die();
 
+global $CFG;
+require_once($CFG->dirroot . '/group/lib.php');
+
 final class tour_repository {
 
     public static function get_tours_for_course(int $courseid): array {
@@ -59,10 +62,19 @@ final class tour_repository {
         );
     }
 
+    public static function get_groupids_for_tour(int $tourid): array {
+        global $DB;
+
+        return array_map(
+            'intval',
+            $DB->get_fieldset_select('local_unittours_tour_groups', 'groupid', 'tourid = :tourid', ['tourid' => $tourid])
+        );
+    }
+
     public static function get_playable_tours_for_course(int $courseid, string $audience, int $userid): array {
         global $DB;
 
-        [$audiencesql, $params] = $DB->get_in_or_equal(['all', $audience], SQL_PARAMS_NAMED, 'audience');
+        [$audiencesql, $params] = $DB->get_in_or_equal(['all', $audience, 'group'], SQL_PARAMS_NAMED, 'audience');
         $params['courseid'] = $courseid;
         $params['userid'] = $userid;
 
@@ -75,13 +87,13 @@ final class tour_repository {
                    AND (t.showmode = 'always' OR c.id IS NULL)
               ORDER BY t.sortorder ASC, t.id ASC";
 
-        return $DB->get_records_sql($sql, $params);
+        return self::filter_group_audience_tours($DB->get_records_sql($sql, $params), $courseid, $userid, $audience);
     }
 
     public static function get_enabled_tours_for_course(int $courseid, string $audience): array {
         global $DB;
 
-        [$audiencesql, $params] = $DB->get_in_or_equal(['all', $audience], SQL_PARAMS_NAMED, 'audience');
+        [$audiencesql, $params] = $DB->get_in_or_equal(['all', $audience, 'group'], SQL_PARAMS_NAMED, 'audience');
         $params['courseid'] = $courseid;
 
         $sql = "SELECT *
@@ -91,7 +103,7 @@ final class tour_repository {
                    AND audience {$audiencesql}
               ORDER BY sortorder ASC, id ASC";
 
-        return $DB->get_records_sql($sql, $params);
+        return self::filter_group_audience_tours($DB->get_records_sql($sql, $params), $courseid, 0, $audience);
     }
 
     public static function save_tour(\stdClass $data, int $courseid): int {
@@ -113,13 +125,17 @@ final class tour_repository {
             $existing = self::get_tour((int) $data->tourid, $courseid);
             $record->id = $existing->id;
             $DB->update_record('local_unittours_tours', $record);
+            self::save_tour_groups($existing->id, $data);
             return (int) $existing->id;
         }
 
         $record->sortorder = $DB->count_records('local_unittours_tours', ['courseid' => $courseid]);
         $record->timecreated = $now;
 
-        return (int) $DB->insert_record('local_unittours_tours', $record);
+        $tourid = (int) $DB->insert_record('local_unittours_tours', $record);
+        self::save_tour_groups($tourid, $data);
+
+        return $tourid;
     }
 
     public static function save_step(\stdClass $data, int $courseid): int {
@@ -163,8 +179,30 @@ final class tour_repository {
 
         $tour = self::get_tour($tourid, $courseid);
         $DB->delete_records('local_unittours_completion', ['tourid' => $tour->id]);
+        $DB->delete_records('local_unittours_tour_groups', ['tourid' => $tour->id]);
         $DB->delete_records('local_unittours_steps', ['tourid' => $tour->id]);
         $DB->delete_records('local_unittours_tours', ['id' => $tour->id]);
+    }
+
+    public static function delete_course_data(int $courseid): void {
+        global $DB;
+
+        $tourids = $DB->get_fieldset_select(
+            'local_unittours_tours',
+            'id',
+            'courseid = :courseid',
+            ['courseid' => $courseid]
+        );
+
+        if (empty($tourids)) {
+            return;
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal($tourids, SQL_PARAMS_NAMED, 'tourid');
+        $DB->delete_records_select('local_unittours_completion', "tourid {$insql}", $params);
+        $DB->delete_records_select('local_unittours_tour_groups', "tourid {$insql}", $params);
+        $DB->delete_records_select('local_unittours_steps', "tourid {$insql}", $params);
+        $DB->delete_records_select('local_unittours_tours', "id {$insql}", $params);
     }
 
     public static function delete_step(int $stepid, int $courseid): int {
@@ -308,5 +346,50 @@ final class tour_repository {
         ]);
 
         return $tourid;
+    }
+
+    private static function save_tour_groups(int $tourid, \stdClass $data): void {
+        global $DB;
+
+        $DB->delete_records('local_unittours_tour_groups', ['tourid' => $tourid]);
+        if (($data->audience ?? '') !== 'group' || empty($data->groupids)) {
+            return;
+        }
+
+        foreach (array_unique(array_map('intval', (array) $data->groupids)) as $groupid) {
+            if ($groupid <= 0) {
+                continue;
+            }
+            $DB->insert_record('local_unittours_tour_groups', (object) [
+                'tourid' => $tourid,
+                'groupid' => $groupid,
+            ]);
+        }
+    }
+
+    private static function filter_group_audience_tours(array $tours, int $courseid, int $userid, string $audience): array {
+        if (!$tours) {
+            return [];
+        }
+
+        $usergroupids = [];
+        if ($userid) {
+            $usergroupids = array_map('intval', groups_get_user_groups($courseid, $userid)[0] ?? []);
+        }
+
+        $filtered = [];
+        foreach ($tours as $key => $tour) {
+            if ($tour->audience !== 'group') {
+                $filtered[$key] = $tour;
+                continue;
+            }
+
+            $tourgroupids = self::get_groupids_for_tour((int) $tour->id);
+            if ($audience === 'staff' || array_intersect($tourgroupids, $usergroupids)) {
+                $filtered[$key] = $tour;
+            }
+        }
+
+        return $filtered;
     }
 }

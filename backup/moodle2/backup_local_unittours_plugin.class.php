@@ -42,9 +42,15 @@ class backup_local_unittours_plugin extends backup_local_plugin {
             'timecreated',
             'timemodified',
         ]);
+        $groups = new backup_nested_element('unit_tour_groups');
+        $group = new backup_nested_element('unit_tour_group', ['id'], [
+            'groupid',
+        ]);
 
         $pluginwrapper->add_child($tours);
         $tours->add_child($tour);
+        $tour->add_child($groups);
+        $groups->add_child($group);
         $tour->add_child($steps);
         $steps->add_child($step);
 
@@ -57,6 +63,11 @@ class backup_local_unittours_plugin extends backup_local_plugin {
             'local_unittours_steps',
             ['tourid' => backup::VAR_PARENTID],
             'sortorder ASC, id ASC'
+        );
+        $group->set_source_table(
+            'local_unittours_tour_groups',
+            ['tourid' => backup::VAR_PARENTID],
+            'id ASC'
         );
 
         return $plugin;

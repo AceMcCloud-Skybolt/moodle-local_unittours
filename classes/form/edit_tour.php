@@ -7,6 +7,7 @@ defined('MOODLE_INTERNAL') || die();
 
 global $CFG;
 require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->dirroot . '/group/lib.php');
 
 class edit_tour extends \moodleform {
 
@@ -35,7 +36,19 @@ class edit_tour extends \moodleform {
             'student' => get_string('audience_student', 'local_unittours'),
             'staff' => get_string('audience_staff', 'local_unittours'),
             'all' => get_string('audience_all', 'local_unittours'),
+            'group' => get_string('audience_group', 'local_unittours'),
         ]);
+
+        $courseid = $this->_customdata['courseid'] ?? 0;
+        $groups = $courseid ? groups_get_all_groups($courseid) : [];
+        $groupoptions = [];
+        foreach ($groups as $group) {
+            $groupoptions[$group->id] = format_string($group->name);
+        }
+        $select = $mform->addElement('select', 'groupids', get_string('audiencegroups', 'local_unittours'), $groupoptions);
+        $select->setMultiple(true);
+        $mform->addHelpButton('groupids', 'audiencegroups', 'local_unittours');
+        $mform->disabledIf('groupids', 'audience', 'neq', 'group');
 
         $mform->addElement('select', 'showmode', get_string('showmode', 'local_unittours'), [
             'untilcomplete' => get_string('showmode_untilcomplete', 'local_unittours'),

@@ -27,6 +27,10 @@ The plugin is intended to solve the limitations of native Moodle User tours for 
 - Adds step ordering controls (move up/down).
 - Adds relaunch and reset-completion controls for testing.
 - Adds optional per-step audio text with browser speech playback.
+- Supports selected Moodle groups as a tour audience.
+- Cleans up tour data when a Moodle course is deleted.
+- Supports semantic course navigation targets such as Grades and Participants.
+- Includes basic keyboard/focus handling for the student-facing tour dialog.
 
 ## Screenshots
 
@@ -52,6 +56,7 @@ Steps should prefer semantic Moodle targets before falling back to CSS selectors
 - course sections;
 - blocks;
 - course index entries;
+- course navigation items;
 - page regions;
 - raw selectors as an escape hatch.
 

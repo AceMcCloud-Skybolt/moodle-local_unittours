@@ -11,6 +11,7 @@ final class target {
     public const SECTION = 'section';
     public const BLOCK = 'block';
     public const COURSE_INDEX = 'course_index';
+    public const COURSE_NAVIGATION = 'course_navigation';
     public const PAGE_REGION = 'page_region';
     public const SELECTOR = 'selector';
 }

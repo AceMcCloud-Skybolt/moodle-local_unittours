@@ -28,6 +28,27 @@ define([], function() {
     };
 
     var detectTarget = function(element) {
+        var navitem = element.closest('.secondary-navigation a, .secondary-navigation button, [role="menuitem"]');
+        if (navitem) {
+            var navtext = (navitem.textContent || '').trim().toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, '_');
+            var navmap = {
+                'course': 'course',
+                'settings': 'settings',
+                'participants': 'participants',
+                'grades': 'grades',
+                'activities': 'activities',
+                'more': 'more',
+                'unit_tours': 'unit_tours'
+            };
+            if (navmap[navtext]) {
+                return {
+                    targettype: 'course_navigation',
+                    targetref: navmap[navtext],
+                    fallbackselector: ''
+                };
+            }
+        }
+
         var cm = element.closest('[data-for="cm"][data-id], li.activity[data-id], #module-0, [id^="module-"]');
         if (cm) {
             var cmid = cm.getAttribute('data-id') || cm.id.replace('module-', '');

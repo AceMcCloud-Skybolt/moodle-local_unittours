@@ -40,12 +40,14 @@ if ($tourid) {
         'text' => $tour->description,
         'format' => $tour->descriptionformat,
     ];
+    $tour->groupids = tour_repository::get_groupids_for_tour($tour->id);
     $mform->set_data($tour);
 } else {
     $mform->set_data((object) [
         'id' => $course->id,
         'enabled' => 0,
         'audience' => 'student',
+        'groupids' => [],
         'showmode' => 'untilcomplete',
         'description' => [
             'text' => '',

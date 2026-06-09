@@ -26,6 +26,21 @@
         <INDEX NAME="courseid-sortorder" UNIQUE="false" FIELDS="courseid, sortorder"/>
       </INDEXES>
     </TABLE>
+    <TABLE NAME="local_unittours_tour_groups" COMMENT="Groups targeted by group-audience unit tours">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="tourid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="tourid" TYPE="foreign" FIELDS="tourid" REFTABLE="local_unittours_tours" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="tourid-groupid" UNIQUE="true" FIELDS="tourid, groupid"/>
+        <INDEX NAME="groupid" UNIQUE="false" FIELDS="groupid"/>
+      </INDEXES>
+    </TABLE>
     <TABLE NAME="local_unittours_steps" COMMENT="Steps belonging to a course-owned tour">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>

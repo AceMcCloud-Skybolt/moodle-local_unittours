@@ -34,5 +34,25 @@ function xmldb_local_unittours_upgrade($oldversion): bool {
         upgrade_plugin_savepoint(true, 2026053100, 'local', 'unittours');
     }
 
+    if ($oldversion < 2026060900) {
+        $table = new xmldb_table('local_unittours_tour_groups');
+
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('tourid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('groupid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+            $table->add_key('tourid', XMLDB_KEY_FOREIGN, ['tourid'], 'local_unittours_tours', ['id']);
+
+            $table->add_index('tourid-groupid', XMLDB_INDEX_UNIQUE, ['tourid', 'groupid']);
+            $table->add_index('groupid', XMLDB_INDEX_NOTUNIQUE, ['groupid']);
+
+            $dbman->create_table($table);
+        }
+
+        upgrade_plugin_savepoint(true, 2026060900, 'local', 'unittours');
+    }
+
     return true;
 }

@@ -17,6 +17,10 @@ class restore_local_unittours_plugin extends restore_local_plugin {
                 $this->get_namefor('step'),
                 $this->get_pathfor('/unit_tours/unit_tour/unit_tour_steps/unit_tour_step')
             ),
+            new restore_path_element(
+                $this->get_namefor('group'),
+                $this->get_pathfor('/unit_tours/unit_tour/unit_tour_groups/unit_tour_group')
+            ),
         ];
     }
 
@@ -57,6 +61,21 @@ class restore_local_unittours_plugin extends restore_local_plugin {
                 'oldtargetref' => $oldtargetref,
             ];
         }
+    }
+
+    public function process_local_unittours_group($data): void {
+        global $DB;
+
+        $data = (object) $data;
+        $newgroupid = $this->get_mappingid('group', (int) $data->groupid, null);
+        if (!$newgroupid) {
+            return;
+        }
+
+        $DB->insert_record('local_unittours_tour_groups', (object) [
+            'tourid' => $this->get_new_parentid($this->get_namefor('tour')),
+            'groupid' => $newgroupid,
+        ]);
     }
 
     public function after_restore_course(): void {
