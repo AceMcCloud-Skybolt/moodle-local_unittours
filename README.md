@@ -92,3 +92,7 @@ powershell -ExecutionPolicy Bypass -File .\local_unittours\scripts\backup_restor
   - target resolution for navigation/activity/block steps
   - audio playback behavior and mute/focus handling
 - If app webview support is limited, define fallback behavior (core text content without advanced popover interactions).
+
+## Compatibility Notes
+
+- [Moodle 5.1 compatibility review](docs/moodle-5.1-compatibility-review.md)
