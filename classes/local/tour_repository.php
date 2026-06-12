@@ -90,7 +90,7 @@ final class tour_repository {
         return self::filter_group_audience_tours($DB->get_records_sql($sql, $params), $courseid, $userid, $audience);
     }
 
-    public static function get_enabled_tours_for_course(int $courseid, string $audience): array {
+    public static function get_enabled_tours_for_course(int $courseid, string $audience, int $userid = 0): array {
         global $DB;
 
         [$audiencesql, $params] = $DB->get_in_or_equal(['all', $audience, 'group'], SQL_PARAMS_NAMED, 'audience');
@@ -103,7 +103,17 @@ final class tour_repository {
                    AND audience {$audiencesql}
               ORDER BY sortorder ASC, id ASC";
 
-        return self::filter_group_audience_tours($DB->get_records_sql($sql, $params), $courseid, 0, $audience);
+        return self::filter_group_audience_tours($DB->get_records_sql($sql, $params), $courseid, $userid, $audience);
+    }
+
+    public static function can_user_access_tour(int $tourid, int $courseid, string $audience, int $userid): bool {
+        foreach (self::get_enabled_tours_for_course($courseid, $audience, $userid) as $tour) {
+            if ((int) $tour->id === $tourid) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function save_tour(\stdClass $data, int $courseid): int {
@@ -125,7 +135,7 @@ final class tour_repository {
             $existing = self::get_tour((int) $data->tourid, $courseid);
             $record->id = $existing->id;
             $DB->update_record('local_unittours_tours', $record);
-            self::save_tour_groups($existing->id, $data);
+            self::save_tour_groups($existing->id, $data, $courseid);
             return (int) $existing->id;
         }
 
@@ -133,13 +143,19 @@ final class tour_repository {
         $record->timecreated = $now;
 
         $tourid = (int) $DB->insert_record('local_unittours_tours', $record);
-        self::save_tour_groups($tourid, $data);
+        self::save_tour_groups($tourid, $data, $courseid);
 
         return $tourid;
     }
 
     public static function save_step(\stdClass $data, int $courseid): int {
         global $DB;
+
+        $existing = null;
+        if (!empty($data->stepid)) {
+            $existing = self::get_step((int) $data->stepid, $courseid);
+            $data->tourid = $existing->tourid;
+        }
 
         $tour = self::get_tour((int) $data->tourid, $courseid);
         $now = time();
@@ -161,8 +177,7 @@ final class tour_repository {
             'timemodified' => $now,
         ];
 
-        if (!empty($data->stepid)) {
-            $existing = self::get_step((int) $data->stepid, $courseid);
+        if ($existing) {
             $record->id = $existing->id;
             $DB->update_record('local_unittours_steps', $record);
             return (int) $existing->id;
@@ -348,18 +363,27 @@ final class tour_repository {
         return $tourid;
     }
 
-    private static function save_tour_groups(int $tourid, \stdClass $data): void {
+    private static function save_tour_groups(int $tourid, \stdClass $data, int $courseid): void {
         global $DB;
 
-        $DB->delete_records('local_unittours_tour_groups', ['tourid' => $tourid]);
         if (($data->audience ?? '') !== 'group' || empty($data->groupids)) {
+            $DB->delete_records('local_unittours_tour_groups', ['tourid' => $tourid]);
             return;
         }
 
+        $groupids = [];
         foreach (array_unique(array_map('intval', (array) $data->groupids)) as $groupid) {
             if ($groupid <= 0) {
                 continue;
             }
+            if (!$DB->record_exists('groups', ['id' => $groupid, 'courseid' => $courseid])) {
+                throw new \invalid_parameter_exception('Invalid group for this course.');
+            }
+            $groupids[] = $groupid;
+        }
+
+        $DB->delete_records('local_unittours_tour_groups', ['tourid' => $tourid]);
+        foreach ($groupids as $groupid) {
             $DB->insert_record('local_unittours_tour_groups', (object) [
                 'tourid' => $tourid,
                 'groupid' => $groupid,

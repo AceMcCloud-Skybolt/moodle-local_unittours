@@ -39,6 +39,9 @@ $mform = new edit_step($url);
 
 if ($stepid) {
     $step = tour_repository::get_step($stepid, $course->id);
+    if ((int) $step->tourid !== (int) $tour->id) {
+        throw new invalid_parameter_exception('Step does not belong to this tour.');
+    }
     $step->id = $course->id;
     $step->stepid = $stepid;
     $step->content = [

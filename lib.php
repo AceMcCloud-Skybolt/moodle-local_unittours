@@ -62,7 +62,7 @@ function local_unittours_before_footer(): void {
 
     $canmanage = has_capability('local/unittours:manage', $context);
     $audience = $canmanage ? 'staff' : 'student';
-    $enabledtours = tour_repository::get_enabled_tours_for_course((int) $COURSE->id, $audience);
+    $enabledtours = tour_repository::get_enabled_tours_for_course((int) $COURSE->id, $audience, (int) $USER->id);
     if (!$enabledtours) {
         return;
     }
