@@ -1,5 +1,26 @@
 <?php
 // This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Unit tours plugin.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 $string['pluginname'] = 'Unit tours';
 $string['unittours'] = 'Unit tours';
@@ -51,17 +72,16 @@ $string['target_missingref'] = 'This step does not have a target reference yet.'
 $string['target_selectorunchecked'] = 'CSS selectors are checked in the browser during playback.';
 $string['target_unknown'] = 'Unknown target type';
 $string['targetref'] = 'Target reference';
-$string['targetref_help'] = 'For semantic targets, this will store the Moodle object reference, such as a course module id, section number, block name, or page region key. Visual authoring will fill this automatically in a later milestone.';
+$string['targetref_help'] = 'For semantic targets, this will store the Moodle object reference, such as a course module id, section id, block name, navigation key, or page region key.';
 $string['fallbackselector'] = 'Fallback CSS selector';
 $string['fallbackselector_help'] = 'Optional CSS selector to use if a semantic target cannot yet be resolved. This is intended as an escape hatch, not the main authoring method.';
 $string['picktarget'] = 'Pick a tour target';
 $string['picktargetbutton'] = 'Pick target on course page';
-$string['picktargetinstructions'] = 'Click an activity, section, block, course index item, or page region to use it as this step target.';
+$string['picktargetinstructions'] = 'Click an activity, section, block, navigation item, or page region to use it as this step target.';
 $string['target_unattached'] = 'Middle of page';
 $string['target_course_module'] = 'Course activity or resource';
 $string['target_section'] = 'Course section';
 $string['target_block'] = 'Block';
-$string['target_course_index'] = 'Course index item';
 $string['target_course_navigation'] = 'Course navigation item';
 $string['target_page_region'] = 'Page region';
 $string['target_selector'] = 'CSS selector';
@@ -84,7 +104,6 @@ $string['audiotext'] = 'Audio text';
 $string['audiotext_help'] = 'Text read aloud when the user presses Play audio. Keep this concise and direct.';
 $string['audiolang'] = 'Audio language code';
 $string['audiolang_help'] = 'Optional BCP-47 language code such as en-AU. Leave blank to use browser defaults.';
-$string['audioenaustralian'] = 'Use Australian English (en-AU)';
 $string['audiostatus'] = 'Audio';
 $string['audiooff'] = 'Off';
 $string['audioneedstext'] = 'Needs audio text';

@@ -232,9 +232,6 @@ define([], function() {
         } else if (step.targettype === 'block' && step.targetref) {
             selectors.push('[data-block="' + step.targetref + '"]');
             selectors.push('.block_' + step.targetref);
-        } else if (step.targettype === 'course_index' && step.targetref) {
-            selectors.push('[data-for="section"][data-id="' + step.targetref + '"]');
-            selectors.push('[data-for="cm"][data-id="' + step.targetref + '"]');
         } else if (step.targettype === 'course_navigation' && step.targetref) {
             return findNavigationTarget(step.targetref);
         } else if (step.targettype === 'page_region' && step.targetref) {

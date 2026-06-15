@@ -58,7 +58,6 @@ Steps should prefer semantic Moodle targets before falling back to CSS selectors
 - course modules;
 - course sections;
 - blocks;
-- course index entries;
 - course navigation items;
 - page regions;
 - raw selectors as an escape hatch.

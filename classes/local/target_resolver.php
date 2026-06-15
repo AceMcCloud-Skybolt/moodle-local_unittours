@@ -1,5 +1,26 @@
 <?php
 // This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Unit tours plugin.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace local_unittours\local;
 
@@ -20,9 +41,6 @@ final class target_resolver {
 
             case target::BLOCK:
                 return self::block($step, $course);
-
-            case target::COURSE_INDEX:
-                return self::course_index($step, $course);
 
             case target::COURSE_NAVIGATION:
                 return self::course_navigation($step);
@@ -97,20 +115,6 @@ final class target_resolver {
             get_string('target_block', 'local_unittours'),
             $exists ? '' : get_string('target_missing', 'local_unittours')
         );
-    }
-
-    private static function course_index(\stdClass $step, \stdClass $course): \stdClass {
-        if (empty($step->targetref)) {
-            return self::result(false, get_string('target_missingref', 'local_unittours'));
-        }
-
-        $fake = clone $step;
-        if (is_numeric($step->targetref)) {
-            $fake->targetref = $step->targetref;
-            return self::course_module($fake, $course);
-        }
-
-        return self::result(true, $step->targetref, get_string('target_course_index', 'local_unittours'));
     }
 
     private static function course_navigation(\stdClass $step): \stdClass {

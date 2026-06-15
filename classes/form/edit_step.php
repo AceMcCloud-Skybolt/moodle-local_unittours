@@ -1,5 +1,26 @@
 <?php
 // This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * Unit tours plugin.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 namespace local_unittours\form;
 
@@ -39,7 +60,6 @@ class edit_step extends \moodleform {
             target::COURSE_MODULE => get_string('target_course_module', 'local_unittours'),
             target::SECTION => get_string('target_section', 'local_unittours'),
             target::BLOCK => get_string('target_block', 'local_unittours'),
-            target::COURSE_INDEX => get_string('target_course_index', 'local_unittours'),
             target::COURSE_NAVIGATION => get_string('target_course_navigation', 'local_unittours'),
             target::PAGE_REGION => get_string('target_page_region', 'local_unittours'),
             target::SELECTOR => get_string('target_selector', 'local_unittours'),
@@ -76,9 +96,6 @@ class edit_step extends \moodleform {
         $mform->setType('audiolang', PARAM_ALPHANUMEXT);
         $mform->addHelpButton('audiolang', 'audiolang', 'local_unittours');
         $mform->disabledIf('audiolang', 'audioenabled', 'notchecked');
-
-        $mform->addElement('advcheckbox', 'audioenaustralian', get_string('audioenaustralian', 'local_unittours'));
-        $mform->disabledIf('audioenaustralian', 'audioenabled', 'notchecked');
 
         $this->add_action_buttons(true, get_string('savechanges'));
     }
