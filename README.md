@@ -2,6 +2,8 @@
 
 `local_unittours` is an early Moodle plugin prototype for course-owned student tours.
 
+Minimum Moodle version: 4.5 (`$plugin->requires = 2024100700`). The current development and compatibility review environment is Moodle 5.1.4+.
+
 The plugin is intended to solve the limitations of native Moodle User tours for unit-specific guidance:
 
 - tours should belong to a course, not only the site administration area;
@@ -31,6 +33,7 @@ The plugin is intended to solve the limitations of native Moodle User tours for 
 - Cleans up tour data when a Moodle course is deleted.
 - Supports semantic course navigation targets such as Grades and Participants.
 - Includes basic keyboard/focus handling for the student-facing tour dialog.
+- Logs tour started, completed, and skipped events to Moodle's standard event log.
 
 ## Screenshots
 
@@ -64,7 +67,7 @@ Steps should prefer semantic Moodle targets before falling back to CSS selectors
 
 - Rich visual authoring with target labels, previews, and validation.
 - Full target health checks after course copy, including browser-side selector validation.
-- Analytics for start, skip, and completion events.
+- Automated browser or Behat smoke coverage for activity, section, block, navigation, and missing-target playback.
 
 ## Backup/Restore Smoke Test
 

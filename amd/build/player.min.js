@@ -35,6 +35,25 @@ define([], function() {
         });
     };
 
+    var markStarted = function(payload, tour) {
+        if (!payload.starturl || !window.fetch) {
+            return;
+        }
+
+        var form = new FormData();
+        form.append('courseid', payload.courseid);
+        form.append('tourid', tour.id);
+        form.append('sesskey', payload.sesskey);
+
+        window.fetch(payload.starturl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            body: form
+        }).catch(function() {
+            // Analytics should never block tour playback.
+        });
+    };
+
     var removeActive = function() {
         if (speechState && speechState.isPlaying && window.speechSynthesis) {
             window.speechSynthesis.cancel();
@@ -208,9 +227,8 @@ define([], function() {
             selectors.push('#module-' + step.targetref);
             selectors.push('[data-id="' + step.targetref + '"]');
         } else if (step.targettype === 'section' && step.targetref) {
-            selectors.push('#section-' + step.targetref);
             selectors.push('[data-sectionid="' + step.targetref + '"]');
-            selectors.push('[data-number="' + step.targetref + '"]');
+            selectors.push('[data-id="' + step.targetref + '"]');
         } else if (step.targettype === 'block' && step.targetref) {
             selectors.push('[data-block="' + step.targetref + '"]');
             selectors.push('.block_' + step.targetref);
@@ -389,6 +407,7 @@ define([], function() {
         if (!tour || !tour.steps || !tour.steps.length) {
             return;
         }
+        markStarted(payload, tour);
         showStep(payload, tour, 0);
     };
 
@@ -457,7 +476,7 @@ define([], function() {
         for (var i = 0; i < payload.autorunids.length; i++) {
             var tour = getTourById(payload, payload.autorunids[i]);
             if (tour && !isCompleted(payload, tour)) {
-                showStep(payload, tour, 0);
+                showTour(payload, tour.id);
                 return;
             }
         }

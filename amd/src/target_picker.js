@@ -64,14 +64,18 @@ define([], function() {
         var section = element.closest('[data-for="section"][data-id], li.section[data-sectionid], [id^="section-"]');
         if (section) {
             var sectionid = section.getAttribute('data-id') ||
-                section.getAttribute('data-sectionid') ||
-                section.getAttribute('data-number') ||
-                section.id.replace('section-', '');
+                section.getAttribute('data-sectionid');
+            if (!sectionid) {
+                var sectionlink = section.querySelector('a[href*="/course/section.php?id="]');
+                if (sectionlink) {
+                    sectionid = new URL(sectionlink.href, window.location.href).searchParams.get('id');
+                }
+            }
             if (sectionid) {
                 return {
                     targettype: 'section',
                     targetref: sectionid,
-                    fallbackselector: section.id ? '#' + CSS.escape(section.id) : cssPath(section)
+                    fallbackselector: '[data-sectionid="' + sectionid + '"], [data-id="' + sectionid + '"]'
                 };
             }
         }

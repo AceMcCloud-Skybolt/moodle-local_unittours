@@ -71,10 +71,6 @@ final class target_resolver {
         }
 
         if (!$sectioninfo) {
-            $sectioninfo = $modinfo->get_section_info($sectionref, IGNORE_MISSING);
-        }
-
-        if (!$sectioninfo) {
             return self::result(false, get_string('target_missing', 'local_unittours'));
         }
 

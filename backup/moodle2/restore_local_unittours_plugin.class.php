@@ -126,6 +126,10 @@ class restore_local_unittours_plugin extends restore_local_plugin {
             return '#module-' . $targetref;
         }
 
+        if ($targettype === 'section' && !empty($targetref) && !empty($fallbackselector)) {
+            return '[data-sectionid="' . $targetref . '"], [data-id="' . $targetref . '"]';
+        }
+
         return $fallbackselector;
     }
 }

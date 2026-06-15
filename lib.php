@@ -73,6 +73,7 @@ function local_unittours_before_footer(): void {
         'courseid' => (int) $COURSE->id,
         'userid' => (int) $USER->id,
         'sesskey' => sesskey(),
+        'starturl' => (new moodle_url('/local/unittours/start.php'))->out(false),
         'completeurl' => (new moodle_url('/local/unittours/complete.php'))->out(false),
         'reseturl' => (new moodle_url('/local/unittours/reset_completion.php'))->out(false),
         'canmanage' => $canmanage,
@@ -98,7 +99,7 @@ function local_unittours_before_footer(): void {
         foreach (tour_repository::get_steps_for_tour((int) $tour->id) as $step) {
             $steps[] = [
                 'id' => (int) $step->id,
-                'title' => format_string($step->title, true, ['context' => $context]),
+                'title' => html_entity_decode(format_string($step->title, true, ['context' => $context]), ENT_QUOTES | ENT_HTML5),
                 'content' => format_text($step->content, $step->contentformat, ['context' => $context]),
                 'targettype' => $step->targettype,
                 'targetref' => $step->targetref,

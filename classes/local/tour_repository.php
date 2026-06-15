@@ -277,16 +277,44 @@ final class tour_repository {
             $existing->status = $status;
             $existing->timemodified = $now;
             $DB->update_record('local_unittours_completion', $existing);
+            self::trigger_completion_event($existing, $tour, $courseid, $userid, $status);
             return;
         }
 
-        $DB->insert_record('local_unittours_completion', (object) [
+        $record = (object) [
             'tourid' => $tour->id,
             'userid' => $userid,
             'status' => $status,
             'timecreated' => $now,
             'timemodified' => $now,
-        ]);
+        ];
+
+        try {
+            $record->id = $DB->insert_record('local_unittours_completion', $record);
+        } catch (\dml_write_exception $exception) {
+            $existing = $DB->get_record('local_unittours_completion', [
+                'tourid' => $tour->id,
+                'userid' => $userid,
+            ], '*', MUST_EXIST);
+            $existing->status = $status;
+            $existing->timemodified = $now;
+            $DB->update_record('local_unittours_completion', $existing);
+            $record = $existing;
+        }
+
+        self::trigger_completion_event($record, $tour, $courseid, $userid, $status);
+    }
+
+    public static function mark_started(int $tourid, int $courseid, int $userid): void {
+        $tour = self::get_tour($tourid, $courseid);
+        $context = \context_course::instance($courseid);
+
+        \local_unittours\event\tour_started::create([
+            'context' => $context,
+            'courseid' => $courseid,
+            'objectid' => $tour->id,
+            'userid' => $userid,
+        ])->trigger();
     }
 
     public static function clear_completion(int $tourid, int $courseid, int $userid): void {
@@ -415,5 +443,27 @@ final class tour_repository {
         }
 
         return $filtered;
+    }
+
+    private static function trigger_completion_event(
+        \stdClass $completion,
+        \stdClass $tour,
+        int $courseid,
+        int $userid,
+        string $status
+    ): void {
+        $eventclass = $status === 'skipped'
+            ? \local_unittours\event\tour_skipped::class
+            : \local_unittours\event\tour_completed::class;
+
+        $eventclass::create([
+            'context' => \context_course::instance($courseid),
+            'courseid' => $courseid,
+            'objectid' => $completion->id,
+            'userid' => $userid,
+            'other' => [
+                'tourid' => (int) $tour->id,
+            ],
+        ])->trigger();
     }
 }

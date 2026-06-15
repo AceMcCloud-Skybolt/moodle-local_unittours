@@ -97,3 +97,5 @@ Remaining recommended dev/staging checks:
 2. Run full backup/restore testing with group audience tours.
 3. Test Moodle App/webview playback and audio behaviour.
 4. Confirm staff preview behaviour for group-specific tours matches Murdoch policy.
+5. Decide whether to keep the course index target type or remove it until it has a first-class picker path.
+6. Decide whether the Australian English audio shortcut should become a language dropdown or be removed in favour of the raw BCP-47 field.
