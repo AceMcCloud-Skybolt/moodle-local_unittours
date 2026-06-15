@@ -82,6 +82,18 @@ Optional parameters:
 powershell -ExecutionPolicy Bypass -File .\local_unittours\scripts\backup_restore_smoke.ps1 -SourceCourseId 2 -TargetCategoryId 1
 ```
 
+The script creates a restored course in the target category and reports the restored tour and first restored step.
+
+## Target/Event Smoke Test
+
+Run this command from the plugin directory:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\target_event_smoke.ps1 -CourseId 2 -UserId 2
+```
+
+This creates a temporary tour, verifies activity, section, navigation, missing-target, completion, and standard log events, then removes the temporary tour. Block targeting is checked when the course has a course-level block instance.
+
 ## Known Limits
 
 - `selector` targets are marked `Unchecked` server-side because CSS selector validity is currently verified during browser playback, not in PHP.

@@ -13,6 +13,14 @@ if (-not (Test-Path $backupDir)) {
     New-Item -ItemType Directory -Path $backupDir | Out-Null
 }
 
+if (-not (Test-Path (Join-Path $MoodleRoot "config.php"))) {
+    throw "Moodle config.php was not found under $MoodleRoot."
+}
+
+if (-not (Test-Path $PhpExe)) {
+    throw "PHP executable was not found at $PhpExe."
+}
+
 Write-Host "Running backup for course $SourceCourseId..."
 & $PhpExe "$MoodleRoot\admin\cli\backup.php" --courseid=$SourceCourseId --destination="$backupDir"
 
@@ -27,7 +35,8 @@ Write-Host "Restoring $($mbz.FullName) into category $TargetCategoryId..."
 $checkScript = @'
 <?php
 define('CLI_SCRIPT', true);
-require_once('D:/server/moodle/config.php');
+[$script, $moodleroot] = $argv;
+require_once($moodleroot . '/config.php');
 global $DB;
 $newcourseid = (int)$DB->get_field('course', 'MAX(id)', []);
 $tour = $DB->get_record('local_unittours_tours', ['courseid' => $newcourseid], '*', IGNORE_MISSING);
@@ -47,8 +56,16 @@ echo "step={$step->id} type={$step->targettype} ref={$step->targetref} fallback=
 '@
 
 $tmpFile = Join-Path $Workspace "temp-unittours-smoke-check.php"
-$checkScript | Set-Content -Path $tmpFile -Encoding ASCII
-& $PhpExe $tmpFile
-Remove-Item $tmpFile -Force
+try {
+    $checkScript | Set-Content -Path $tmpFile -Encoding ASCII
+    & $PhpExe $tmpFile $MoodleRoot
+    if ($LASTEXITCODE -ne 0) {
+        throw "Backup/restore smoke check failed with exit code $LASTEXITCODE."
+    }
+} finally {
+    if (Test-Path $tmpFile) {
+        Remove-Item $tmpFile -Force
+    }
+}
 
 Write-Host "Smoke test completed."
