@@ -20,12 +20,12 @@ Feature: Student unit tour playback anchors to Moodle course page elements
 
   Scenario: A section-targeted tour step highlights the intended section
     Given a section unit tour exists in course "C1" targeting section "1"
-    When I am on the "C1" course page logged in as "student1"
+    When I am on the "C1" "course" page logged in as "student1"
     Then I should see the unit tour popover "Section tour step"
     And the unit tour should highlight section "1" in course "C1"
 
   Scenario: A course navigation tour step highlights Grades
     Given a course navigation unit tour exists in course "C1" targeting "grades"
-    When I am on the "C1" course page logged in as "student1"
+    When I am on the "C1" "course" page logged in as "student1"
     Then I should see the unit tour popover "Navigation tour step"
     And the unit tour should highlight the course navigation item "grades"

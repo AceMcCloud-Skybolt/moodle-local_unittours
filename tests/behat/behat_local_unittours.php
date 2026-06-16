@@ -214,9 +214,11 @@ JS;
      */
     private function highlight_matches_selector(string $selector, string $message): void {
         $script = <<<JS
-const expected = document.querySelector('{$selector}');
 const highlighted = document.querySelector('.local-unittours-highlight');
-return !!expected && highlighted === expected;
+if (!highlighted) {
+    return false;
+}
+return highlighted.matches('{$selector}');
 JS;
 
         $this->assert_js_returns_true($script, $message);
