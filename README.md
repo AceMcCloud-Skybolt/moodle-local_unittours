@@ -66,7 +66,22 @@ Steps should prefer semantic Moodle targets before falling back to CSS selectors
 
 - Rich visual authoring with target labels, previews, and validation.
 - Full target health checks after course copy, including browser-side selector validation.
-- Automated browser or Behat smoke coverage for activity, section, block, navigation, and missing-target playback.
+- Broader automated browser or Behat smoke coverage for activity, block, missing-target, and multi-step playback.
+
+## Behat Browser Smoke Test
+
+The plugin includes Behat coverage for the Moodle 5.1 browser surface that the CLI smoke tests cannot see:
+
+- section-targeted student playback highlights the intended course section;
+- course-navigation-targeted student playback highlights the intended navigation item.
+
+After configuring Moodle's `$CFG->behat_dataroot`, `$CFG->behat_prefix`, and `$CFG->behat_wwwroot`, initialise Behat and run:
+
+```powershell
+$env:PATH = 'D:\server\php;' + $env:PATH
+php D:\server\moodle\public\admin\tool\behat\cli\init.php
+php D:\server\moodle\public\admin\tool\behat\cli\run.php --tags="@local_unittours"
+```
 
 ## Backup/Restore Smoke Test
 
