@@ -173,10 +173,10 @@ $tourid = $repo::save_tour((object) [
 
     $repo::mark_started($tourid, $courseid, $userid);
     $repo::mark_completion($tourid, $courseid, $userid, 'skipped');
-    $repo::mark_completion($tourid, $courseid, $userid, 'completed');
+    $repo::mark_completion($tourid, $courseid, $userid, 'complete');
 
     $completion = $DB->get_record('local_unittours_completion', ['tourid' => $tourid, 'userid' => $userid], '*', MUST_EXIST);
-    smoke_assert($completion->status === 'completed', 'Completion status was not updated to completed.');
+    smoke_assert($completion->status === 'complete', 'Completion status was not updated to complete.');
     smoke_write_state($statefile, [
         'courseid' => $courseid,
         'userid' => $userid,
@@ -248,12 +248,19 @@ try {
         Remove-Item $stateFile -Force
     }
     & $PhpExe $tmpFile $MoodleRoot $CourseId $UserId $stateFile
-    if ($LASTEXITCODE -ne 0) {
-        throw "Target/event smoke test failed with exit code $LASTEXITCODE."
+    $phaseExitCode = $LASTEXITCODE
+    $verifyExitCode = 0
+    if (Test-Path $stateFile) {
+        & $PhpExe $verifyFile $MoodleRoot $stateFile
+        $verifyExitCode = $LASTEXITCODE
+    } else {
+        $verifyExitCode = 2
     }
-    & $PhpExe $verifyFile $MoodleRoot $stateFile
-    if ($LASTEXITCODE -ne 0) {
-        throw "Target/event smoke verification failed with exit code $LASTEXITCODE."
+    if ($phaseExitCode -ne 0) {
+        throw "Target/event smoke test failed with exit code $phaseExitCode."
+    }
+    if ($verifyExitCode -ne 0) {
+        throw "Target/event smoke verification failed with exit code $verifyExitCode."
     }
 } finally {
     if (Test-Path $tmpFile) {

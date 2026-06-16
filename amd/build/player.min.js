@@ -228,7 +228,7 @@ define([], function() {
             selectors.push('[data-id="' + step.targetref + '"]');
         } else if (step.targettype === 'section' && step.targetref) {
             selectors.push('[data-sectionid="' + step.targetref + '"]');
-            selectors.push('[data-id="' + step.targetref + '"]');
+            selectors.push('[data-for="section"][data-id="' + step.targetref + '"]');
         } else if (step.targettype === 'block' && step.targetref) {
             selectors.push('[data-block="' + step.targetref + '"]');
             selectors.push('.block_' + step.targetref);

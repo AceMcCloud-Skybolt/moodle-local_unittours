@@ -148,7 +148,7 @@ class restore_local_unittours_plugin extends restore_local_plugin {
         }
 
         if ($targettype === 'section' && !empty($targetref) && !empty($fallbackselector)) {
-            return '[data-sectionid="' . $targetref . '"], [data-id="' . $targetref . '"]';
+            return '[data-sectionid="' . $targetref . '"], [data-for="section"][data-id="' . $targetref . '"]';
         }
 
         return $fallbackselector;

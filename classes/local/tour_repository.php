@@ -287,6 +287,10 @@ final class tour_repository {
     public static function mark_completion(int $tourid, int $courseid, int $userid, string $status): void {
         global $DB;
 
+        if (!in_array($status, ['complete', 'skipped'], true)) {
+            throw new \invalid_parameter_exception('Invalid completion status.');
+        }
+
         $tour = self::get_tour($tourid, $courseid);
         $now = time();
         $existing = $DB->get_record('local_unittours_completion', [

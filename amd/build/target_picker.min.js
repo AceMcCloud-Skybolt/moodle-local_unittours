@@ -75,7 +75,7 @@ define([], function() {
                 return {
                     targettype: 'section',
                     targetref: sectionid,
-                    fallbackselector: '[data-sectionid="' + sectionid + '"], [data-id="' + sectionid + '"]'
+                    fallbackselector: '[data-sectionid="' + sectionid + '"], [data-for="section"][data-id="' + sectionid + '"]'
                 };
             }
         }
