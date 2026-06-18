@@ -37,19 +37,25 @@ The plugin is intended to solve the limitations of native Moodle User tours for 
 
 ## Screenshots
 
-![Course-owned tour builder](docs/screenshots/01-dashboard-overview.png)
+### Staff workflow
 
-![Target health and audio status](docs/screenshots/02-step-health-audio-status.png)
+![Staff tour overview](docs/screenshots/01-staff-tour-overview.png)
 
-![Course menu entry](docs/screenshots/03-course-menu-entry.png)
+![Staff audience and show mode settings](docs/screenshots/02-staff-audience-and-show-mode.png)
 
-![Audio step editor](docs/screenshots/04-audio-step-editor.png)
+![Staff step editor with targeting and audio](docs/screenshots/03-staff-step-editor-targeting-audio.png)
 
-![Visual target picker](docs/screenshots/05-visual-target-picker.png)
+![Staff visual target picker](docs/screenshots/04-staff-visual-target-picker.png)
 
-![Student-facing tour with audio](docs/screenshots/06-student-tour-audio.png)
+### Student workflow
 
-![User-facing tour result](docs/screenshots/07-user-facing-tour-result.png)
+![Student section guidance](docs/screenshots/05-student-section-guidance.png)
+
+![Student activity target](docs/screenshots/06-student-activity-target.png)
+
+![Student grades navigation target](docs/screenshots/07-student-grades-navigation.png)
+
+![Student urgent news modal](docs/screenshots/08-student-urgent-news-modal.png)
 
 ## Target model
 
