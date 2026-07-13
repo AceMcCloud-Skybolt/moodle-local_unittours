@@ -26,4 +26,6 @@ require_once(__DIR__ . '/../../config.php');
 
 $courseid = required_param('id', PARAM_INT);
 
+require_login(get_course($courseid));
+
 redirect(new moodle_url('/local/unittours/manage.php', ['id' => $courseid]));

@@ -22,12 +22,22 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Restore support for unit tours attached to a course backup.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class restore_local_unittours_plugin extends restore_local_plugin {
     /** @var array Steps whose target references need restore mapping after activities exist. */
     protected $pendingtargetremaps = [];
 
+    /**
+     * Declare the restore paths handled by this plugin.
+     *
+     * @return restore_path_element[] Paths to process.
+     */
     public function define_course_plugin_structure() {
         return [
             new restore_path_element(
@@ -45,6 +55,11 @@ class restore_local_unittours_plugin extends restore_local_plugin {
         ];
     }
 
+    /**
+     * Restore a tour record and remember its id mapping.
+     *
+     * @param array|\stdClass $data Parsed tour data from the backup file.
+     */
     public function process_local_unittours_tour($data): void {
         global $DB;
 
@@ -60,6 +75,11 @@ class restore_local_unittours_plugin extends restore_local_plugin {
         $this->set_mapping($this->get_namefor('tour'), $oldid, $newid);
     }
 
+    /**
+     * Restore a step record and queue its target reference for remapping.
+     *
+     * @param array|\stdClass $data Parsed step data from the backup file.
+     */
     public function process_local_unittours_step($data): void {
         global $DB;
 
@@ -84,6 +104,11 @@ class restore_local_unittours_plugin extends restore_local_plugin {
         }
     }
 
+    /**
+     * Restore a tour group audience row, mapping the group id to the restored group.
+     *
+     * @param array|\stdClass $data Parsed group data from the backup file.
+     */
     public function process_local_unittours_group($data): void {
         global $DB;
 
@@ -99,6 +124,9 @@ class restore_local_unittours_plugin extends restore_local_plugin {
         ]);
     }
 
+    /**
+     * Remap queued step target references once activities and sections exist.
+     */
     public function after_restore_course(): void {
         global $DB;
 
@@ -124,6 +152,13 @@ class restore_local_unittours_plugin extends restore_local_plugin {
         }
     }
 
+    /**
+     * Map an old course module or section id to its restored counterpart.
+     *
+     * @param string $targettype Step target type.
+     * @param string|null $targetref Old target reference.
+     * @return string|null New target reference (old one if no mapping was found).
+     */
     private function remap_targetref(string $targettype, ?string $targetref): ?string {
         if ($targetref === null || $targetref === '') {
             return $targetref;
@@ -142,6 +177,14 @@ class restore_local_unittours_plugin extends restore_local_plugin {
         return $targetref;
     }
 
+    /**
+     * Rebuild a step's fallback CSS selector around the remapped target reference.
+     *
+     * @param string $targettype Step target type.
+     * @param string|null $targetref New target reference.
+     * @param string|null $fallbackselector Existing fallback selector.
+     * @return string|null Updated fallback selector.
+     */
     private function remap_fallbackselector(string $targettype, ?string $targetref, ?string $fallbackselector): ?string {
         if ($targettype === 'course_module' && !empty($targetref) && !empty($fallbackselector)) {
             return '#module-' . $targetref;

@@ -29,8 +29,20 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/group/lib.php');
 
+/**
+ * Data access layer for unit tours, steps, group audiences and completion records.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 final class tour_repository {
-
+    /**
+     * Get all tours in a course, in display order.
+     *
+     * @param int $courseid Course id.
+     * @return \stdClass[] Tour records keyed by id.
+     */
     public static function get_tours_for_course(int $courseid): array {
         global $DB;
 
@@ -41,12 +53,48 @@ final class tour_repository {
         );
     }
 
+    /**
+     * Count the steps in a tour.
+     *
+     * @param int $tourid Tour id.
+     * @return int Number of steps.
+     */
     public static function count_steps(int $tourid): int {
         global $DB;
 
         return $DB->count_records('local_unittours_steps', ['tourid' => $tourid]);
     }
 
+    /**
+     * Get step counts for every tour in a course using a single query.
+     *
+     * @param int $courseid Course id.
+     * @return int[] Map of tour id => step count (tours without steps are absent).
+     */
+    public static function get_step_counts_for_course(int $courseid): array {
+        global $DB;
+
+        $sql = "SELECT s.tourid, COUNT(s.id) AS stepcount
+                  FROM {local_unittours_steps} s
+                  JOIN {local_unittours_tours} t ON t.id = s.tourid
+                 WHERE t.courseid = :courseid
+              GROUP BY s.tourid";
+
+        $counts = [];
+        foreach ($DB->get_records_sql($sql, ['courseid' => $courseid]) as $record) {
+            $counts[(int) $record->tourid] = (int) $record->stepcount;
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Get a tour, asserting it belongs to the given course.
+     *
+     * @param int $tourid Tour id.
+     * @param int $courseid Course id the tour must belong to.
+     * @return \stdClass Tour record.
+     */
     public static function get_tour(int $tourid, int $courseid): \stdClass {
         global $DB;
 
@@ -58,6 +106,13 @@ final class tour_repository {
         );
     }
 
+    /**
+     * Get a step, asserting its tour belongs to the given course.
+     *
+     * @param int $stepid Step id.
+     * @param int $courseid Course id the parent tour must belong to.
+     * @return \stdClass Step record.
+     */
     public static function get_step(int $stepid, int $courseid): \stdClass {
         global $DB;
 
@@ -73,6 +128,12 @@ final class tour_repository {
         ], MUST_EXIST);
     }
 
+    /**
+     * Get the steps of a tour, in display order.
+     *
+     * @param int $tourid Tour id.
+     * @return \stdClass[] Step records keyed by id.
+     */
     public static function get_steps_for_tour(int $tourid): array {
         global $DB;
 
@@ -83,6 +144,41 @@ final class tour_repository {
         );
     }
 
+    /**
+     * Get the steps of multiple tours in a single query.
+     *
+     * @param int[] $tourids Tour ids.
+     * @return array Map of tour id => step records in display order.
+     */
+    public static function get_steps_for_tours(array $tourids): array {
+        global $DB;
+
+        if (empty($tourids)) {
+            return [];
+        }
+
+        [$insql, $params] = $DB->get_in_or_equal($tourids, SQL_PARAMS_NAMED, 'tourid');
+        $records = $DB->get_records_select(
+            'local_unittours_steps',
+            "tourid {$insql}",
+            $params,
+            'tourid ASC, sortorder ASC, id ASC'
+        );
+
+        $steps = array_fill_keys(array_map('intval', $tourids), []);
+        foreach ($records as $record) {
+            $steps[(int) $record->tourid][] = $record;
+        }
+
+        return $steps;
+    }
+
+    /**
+     * Get the group ids a tour is restricted to.
+     *
+     * @param int $tourid Tour id.
+     * @return int[] Group ids.
+     */
     public static function get_groupids_for_tour(int $tourid): array {
         global $DB;
 
@@ -92,25 +188,62 @@ final class tour_repository {
         );
     }
 
-    public static function get_playable_tours_for_course(int $courseid, string $audience, int $userid): array {
+    /**
+     * Get the group ids for multiple tours in a single query.
+     *
+     * @param int[] $tourids Tour ids.
+     * @return array Map of tour id => group ids (tours without groups map to an empty array).
+     */
+    public static function get_groupids_for_tours(array $tourids): array {
         global $DB;
 
-        [$audiencesql, $params] = $DB->get_in_or_equal(['all', $audience, 'group'], SQL_PARAMS_NAMED, 'audience');
-        $params['courseid'] = $courseid;
-        $params['userid'] = $userid;
+        if (empty($tourids)) {
+            return [];
+        }
 
-        $sql = "SELECT t.*
-                  FROM {local_unittours_tours} t
-             LEFT JOIN {local_unittours_completion} c ON c.tourid = t.id AND c.userid = :userid
-                 WHERE t.courseid = :courseid
-                   AND t.enabled = 1
-                   AND t.audience {$audiencesql}
-                   AND (t.showmode = 'always' OR c.id IS NULL)
-              ORDER BY t.sortorder ASC, t.id ASC";
+        [$insql, $params] = $DB->get_in_or_equal($tourids, SQL_PARAMS_NAMED, 'tourid');
+        $records = $DB->get_records_select('local_unittours_tour_groups', "tourid {$insql}", $params);
 
-        return self::filter_group_audience_tours($DB->get_records_sql($sql, $params), $courseid, $userid, $audience);
+        $groupids = array_fill_keys(array_map('intval', $tourids), []);
+        foreach ($records as $record) {
+            $groupids[(int) $record->tourid][] = (int) $record->groupid;
+        }
+
+        return $groupids;
     }
 
+    /**
+     * Get the ids of tours in a course the user has a completion record for.
+     *
+     * @param int $courseid Course id.
+     * @param int $userid User id.
+     * @return int[] Tour ids.
+     */
+    public static function get_completed_tourids(int $courseid, int $userid): array {
+        global $DB;
+
+        $sql = "SELECT c.tourid
+                  FROM {local_unittours_completion} c
+                  JOIN {local_unittours_tours} t ON t.id = c.tourid
+                 WHERE t.courseid = :courseid
+                   AND c.userid = :userid";
+
+        return array_map('intval', $DB->get_fieldset_sql($sql, [
+            'courseid' => $courseid,
+            'userid' => $userid,
+        ]));
+    }
+
+    /**
+     * Get the enabled tours in a course visible to the given audience, in display order.
+     *
+     * Group-audience tours are filtered to those the user is a member of (staff see all).
+     *
+     * @param int $courseid Course id.
+     * @param string $audience Audience key ('student' or 'staff').
+     * @param int $userid User id for group membership checks, 0 to skip them.
+     * @return \stdClass[] Tour records keyed by id.
+     */
     public static function get_enabled_tours_for_course(int $courseid, string $audience, int $userid = 0): array {
         global $DB;
 
@@ -127,6 +260,15 @@ final class tour_repository {
         return self::filter_group_audience_tours($DB->get_records_sql($sql, $params), $courseid, $userid, $audience);
     }
 
+    /**
+     * Check whether an enabled tour is visible to the user for the given audience.
+     *
+     * @param int $tourid Tour id.
+     * @param int $courseid Course id.
+     * @param string $audience Audience key ('student' or 'staff').
+     * @param int $userid User id for group membership checks.
+     * @return bool True if the user may access the tour.
+     */
     public static function can_user_access_tour(int $tourid, int $courseid, string $audience, int $userid): bool {
         foreach (self::get_enabled_tours_for_course($courseid, $audience, $userid) as $tour) {
             if ((int) $tour->id === $tourid) {
@@ -137,6 +279,13 @@ final class tour_repository {
         return false;
     }
 
+    /**
+     * Create or update a tour from edit form data.
+     *
+     * @param \stdClass $data Data returned by the edit_tour form.
+     * @param int $courseid Course id the tour belongs to.
+     * @return int Tour id.
+     */
     public static function save_tour(\stdClass $data, int $courseid): int {
         global $DB;
 
@@ -169,6 +318,13 @@ final class tour_repository {
         return $tourid;
     }
 
+    /**
+     * Create or update a step from edit form data.
+     *
+     * @param \stdClass $data Data returned by the edit_step form.
+     * @param int $courseid Course id the parent tour belongs to.
+     * @return int Step id.
+     */
     public static function save_step(\stdClass $data, int $courseid): int {
         global $DB;
 
@@ -210,6 +366,12 @@ final class tour_repository {
         return (int) $DB->insert_record('local_unittours_steps', $record);
     }
 
+    /**
+     * Delete a tour with its steps, group audiences and completion records.
+     *
+     * @param int $tourid Tour id.
+     * @param int $courseid Course id the tour must belong to.
+     */
     public static function delete_tour(int $tourid, int $courseid): void {
         global $DB;
 
@@ -220,6 +382,11 @@ final class tour_repository {
         $DB->delete_records('local_unittours_tours', ['id' => $tour->id]);
     }
 
+    /**
+     * Delete all plugin data for a course (used when a course is deleted).
+     *
+     * @param int $courseid Course id.
+     */
     public static function delete_course_data(int $courseid): void {
         global $DB;
 
@@ -241,6 +408,13 @@ final class tour_repository {
         $DB->delete_records_select('local_unittours_tours', "id {$insql}", $params);
     }
 
+    /**
+     * Delete a step.
+     *
+     * @param int $stepid Step id.
+     * @param int $courseid Course id the parent tour must belong to.
+     * @return int Id of the tour the step belonged to.
+     */
     public static function delete_step(int $stepid, int $courseid): int {
         global $DB;
 
@@ -250,6 +424,14 @@ final class tour_repository {
         return (int) $step->tourid;
     }
 
+    /**
+     * Swap a step's sort order with its neighbour in the given direction.
+     *
+     * @param int $stepid Step id.
+     * @param int $courseid Course id the parent tour must belong to.
+     * @param string $direction 'up' or 'down'.
+     * @return int Id of the tour the step belongs to.
+     */
     public static function move_step(int $stepid, int $courseid, string $direction): int {
         global $DB;
 
@@ -284,6 +466,14 @@ final class tour_repository {
         return (int) $step->tourid;
     }
 
+    /**
+     * Record that a user completed or skipped a tour, then trigger the matching event.
+     *
+     * @param int $tourid Tour id.
+     * @param int $courseid Course id the tour must belong to.
+     * @param int $userid User id.
+     * @param string $status 'complete' or 'skipped'.
+     */
     public static function mark_completion(int $tourid, int $courseid, int $userid, string $status): void {
         global $DB;
 
@@ -330,6 +520,13 @@ final class tour_repository {
         self::trigger_completion_event($record, $tour, $courseid, $userid, $status);
     }
 
+    /**
+     * Trigger the tour started event for a user.
+     *
+     * @param int $tourid Tour id.
+     * @param int $courseid Course id the tour must belong to.
+     * @param int $userid User id.
+     */
     public static function mark_started(int $tourid, int $courseid, int $userid): void {
         $tour = self::get_tour($tourid, $courseid);
         $context = \context_course::instance($courseid);
@@ -342,6 +539,13 @@ final class tour_repository {
         ])->trigger();
     }
 
+    /**
+     * Remove a user's completion record for one tour.
+     *
+     * @param int $tourid Tour id.
+     * @param int $courseid Course id the tour must belong to.
+     * @param int $userid User id.
+     */
     public static function clear_completion(int $tourid, int $courseid, int $userid): void {
         global $DB;
 
@@ -352,6 +556,12 @@ final class tour_repository {
         ]);
     }
 
+    /**
+     * Remove a user's completion records for every tour in a course.
+     *
+     * @param int $courseid Course id.
+     * @param int $userid User id.
+     */
     public static function clear_completion_for_course(int $courseid, int $userid): void {
         global $DB;
 
@@ -374,6 +584,18 @@ final class tour_repository {
         );
     }
 
+    /**
+     * Create a disabled draft tour with one placeholder step and return its id.
+     *
+     * The placeholder name and step content are deliberately hardcoded English literals
+     * rather than get_string() calls: the values are stored in the database at creation
+     * time, so language-pack strings would freeze in whatever language the creator was
+     * using and produce mismatched content on multi-language sites or after restores.
+     * Editors are expected to replace them immediately.
+     *
+     * @param int $courseid Course id.
+     * @return int New tour id.
+     */
     public static function create_draft_tour(int $courseid): int {
         global $DB;
 
@@ -382,8 +604,8 @@ final class tour_repository {
 
         $tourid = $DB->insert_record('local_unittours_tours', (object) [
             'courseid' => $courseid,
-            'name' => get_string('drafttourname', 'local_unittours'),
-            'description' => get_string('drafttourdescription', 'local_unittours'),
+            'name' => 'New student orientation',
+            'description' => 'A draft tour for this unit.',
             'descriptionformat' => FORMAT_HTML,
             'enabled' => 0,
             'audience' => 'student',
@@ -395,8 +617,8 @@ final class tour_repository {
 
         $DB->insert_record('local_unittours_steps', (object) [
             'tourid' => $tourid,
-            'title' => get_string('draftsteptitle', 'local_unittours'),
-            'content' => get_string('draftstepcontent', 'local_unittours'),
+            'title' => 'Welcome to the unit',
+            'content' => 'Use this first step to introduce students to the most important parts of the unit site.',
             'contentformat' => FORMAT_HTML,
             'targettype' => target::UNATTACHED,
             'targetref' => null,
@@ -416,6 +638,13 @@ final class tour_repository {
         return $tourid;
     }
 
+    /**
+     * Replace a tour's group audience rows from edit form data.
+     *
+     * @param int $tourid Tour id.
+     * @param \stdClass $data Data returned by the edit_tour form.
+     * @param int $courseid Course id used to validate the submitted groups.
+     */
     private static function save_tour_groups(int $tourid, \stdClass $data, int $courseid): void {
         global $DB;
 
@@ -444,15 +673,37 @@ final class tour_repository {
         }
     }
 
+    /**
+     * Remove group-audience tours the user cannot see (staff see all of them).
+     *
+     * @param \stdClass[] $tours Tour records keyed by id.
+     * @param int $courseid Course id.
+     * @param int $userid User id for group membership checks, 0 to skip them.
+     * @param string $audience Audience key ('student' or 'staff').
+     * @return \stdClass[] Filtered tour records keyed by id.
+     */
     private static function filter_group_audience_tours(array $tours, int $courseid, int $userid, string $audience): array {
         if (!$tours) {
             return [];
+        }
+
+        $grouptourids = [];
+        foreach ($tours as $tour) {
+            if ($tour->audience === 'group') {
+                $grouptourids[] = (int) $tour->id;
+            }
+        }
+
+        if (!$grouptourids) {
+            return $tours;
         }
 
         $usergroupids = [];
         if ($userid) {
             $usergroupids = array_map('intval', groups_get_user_groups($courseid, $userid)[0] ?? []);
         }
+
+        $tourgroupids = self::get_groupids_for_tours($grouptourids);
 
         $filtered = [];
         foreach ($tours as $key => $tour) {
@@ -461,8 +712,7 @@ final class tour_repository {
                 continue;
             }
 
-            $tourgroupids = self::get_groupids_for_tour((int) $tour->id);
-            if ($audience === 'staff' || array_intersect($tourgroupids, $usergroupids)) {
+            if ($audience === 'staff' || array_intersect($tourgroupids[(int) $tour->id] ?? [], $usergroupids)) {
                 $filtered[$key] = $tour;
             }
         }
@@ -470,6 +720,15 @@ final class tour_repository {
         return $filtered;
     }
 
+    /**
+     * Trigger the tour completed or skipped event for a completion record.
+     *
+     * @param \stdClass $completion Completion record.
+     * @param \stdClass $tour Tour record.
+     * @param int $courseid Course id.
+     * @param int $userid User id.
+     * @param string $status 'complete' or 'skipped'.
+     */
     private static function trigger_completion_event(
         \stdClass $completion,
         \stdClass $tour,

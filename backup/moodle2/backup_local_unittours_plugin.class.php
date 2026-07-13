@@ -22,10 +22,19 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Backup support for unit tours attached to a course backup.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class backup_local_unittours_plugin extends backup_local_plugin {
-
+    /**
+     * Declare the backup structure for tours, steps and group audiences.
+     *
+     * @return backup_plugin_element The plugin element with its children attached.
+     */
     protected function define_course_plugin_structure() {
         $plugin = $this->get_plugin_element();
         $pluginwrapper = new backup_nested_element($this->get_recommended_name());

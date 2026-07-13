@@ -30,8 +30,17 @@ global $CFG;
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/group/lib.php');
 
+/**
+ * Form for creating and editing a tour.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class edit_tour extends \moodleform {
-
+    /**
+     * Define the tour form fields.
+     */
     protected function definition(): void {
         $mform = $this->_form;
 

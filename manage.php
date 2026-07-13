@@ -54,12 +54,34 @@ if ($action === 'createtour' && confirm_sesskey()) {
     );
 }
 
-if ($action === 'deletetour' && $tourid && confirm_sesskey()) {
-    tour_repository::delete_tour($tourid, $course->id);
-    redirect($url, get_string('tourdeleted', 'local_unittours'), null, \core\output\notification::NOTIFY_SUCCESS);
+if ($action === 'deletetour' && $tourid) {
+    $tour = tour_repository::get_tour($tourid, $course->id);
+
+    // Deletion only happens on a confirmed POST; the initial delete link is a safe GET
+    // that renders this confirmation page.
+    if (optional_param('confirm', 0, PARAM_BOOL) && data_submitted() && confirm_sesskey()) {
+        tour_repository::delete_tour($tourid, $course->id);
+        redirect($url, get_string('tourdeleted', 'local_unittours'), null, \core\output\notification::NOTIFY_SUCCESS);
+    }
+
+    echo $OUTPUT->header();
+    $continueurl = new moodle_url($url, [
+        'action' => 'deletetour',
+        'tourid' => $tourid,
+        'confirm' => 1,
+        'sesskey' => sesskey(),
+    ]);
+    echo $OUTPUT->confirm(
+        get_string('deletetourconfirm', 'local_unittours', format_string($tour->name, true, ['context' => $context])),
+        new single_button($continueurl, get_string('delete'), 'post'),
+        $url
+    );
+    echo $OUTPUT->footer();
+    exit;
 }
 
 $tours = tour_repository::get_tours_for_course($course->id);
+$stepcounts = tour_repository::get_step_counts_for_course($course->id);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('manageunittours', 'local_unittours'));
@@ -87,13 +109,12 @@ foreach ($tours as $tour) {
     $deleteurl = new moodle_url($url, [
         'action' => 'deletetour',
         'tourid' => $tour->id,
-        'sesskey' => sesskey(),
     ]);
 
     $table->data[] = [
         html_writer::link($viewurl, format_string($tour->name, true, ['context' => $context])),
         $tour->enabled ? get_string('enabled', 'local_unittours') : get_string('disabled', 'local_unittours'),
-        tour_repository::count_steps((int) $tour->id),
+        $stepcounts[(int) $tour->id] ?? 0,
         html_writer::link($editurl, get_string('edit')) . ' | ' .
             html_writer::link($deleteurl, get_string('delete')),
     ];

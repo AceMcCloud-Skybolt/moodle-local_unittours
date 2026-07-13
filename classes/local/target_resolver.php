@@ -24,10 +24,21 @@
 
 namespace local_unittours\local;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Resolves step targets to a human-readable label and a health status for editors.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 final class target_resolver {
-
+    /**
+     * Describe a step's target for the step listing.
+     *
+     * @param \stdClass $step Step record.
+     * @param \stdClass $course Course record.
+     * @return \stdClass Object with found (?bool), label, type and detail properties.
+     */
     public static function describe(\stdClass $step, \stdClass $course): \stdClass {
         switch ($step->targettype) {
             case target::UNATTACHED:
@@ -56,6 +67,13 @@ final class target_resolver {
         }
     }
 
+    /**
+     * Describe a course module target.
+     *
+     * @param \stdClass $step Step record.
+     * @param \stdClass $course Course record.
+     * @return \stdClass Result object (see describe()).
+     */
     private static function course_module(\stdClass $step, \stdClass $course): \stdClass {
         $cmid = clean_param($step->targetref, PARAM_INT);
         if (!$cmid) {
@@ -76,6 +94,13 @@ final class target_resolver {
         );
     }
 
+    /**
+     * Describe a course section target.
+     *
+     * @param \stdClass $step Step record.
+     * @param \stdClass $course Course record.
+     * @return \stdClass Result object (see describe()).
+     */
     private static function section(\stdClass $step, \stdClass $course): \stdClass {
         $sectionref = clean_param($step->targetref, PARAM_INT);
         $modinfo = get_fast_modinfo($course);
@@ -96,6 +121,13 @@ final class target_resolver {
         return self::result(true, $name, get_string('target_section', 'local_unittours'));
     }
 
+    /**
+     * Describe a block target.
+     *
+     * @param \stdClass $step Step record.
+     * @param \stdClass $course Course record.
+     * @return \stdClass Result object (see describe()).
+     */
     private static function block(\stdClass $step, \stdClass $course): \stdClass {
         global $DB;
 
@@ -117,14 +149,30 @@ final class target_resolver {
         );
     }
 
+    /**
+     * Describe a course navigation target.
+     *
+     * @param \stdClass $step Step record.
+     * @return \stdClass Result object (see describe()).
+     */
     private static function course_navigation(\stdClass $step): \stdClass {
         if (empty($step->targetref)) {
             return self::result(false, get_string('target_missingref', 'local_unittours'));
         }
 
-        return self::result(true, self::navigation_label($step->targetref), get_string('target_course_navigation', 'local_unittours'));
+        return self::result(
+            true,
+            self::navigation_label($step->targetref),
+            get_string('target_course_navigation', 'local_unittours')
+        );
     }
 
+    /**
+     * Map a navigation target key to its display label.
+     *
+     * @param string $targetref Navigation target key.
+     * @return string Display label (the raw key if unknown).
+     */
     private static function navigation_label(string $targetref): string {
         $labels = [
             'course' => get_string('navtarget_course', 'local_unittours'),
@@ -139,6 +187,12 @@ final class target_resolver {
         return $labels[$targetref] ?? $targetref;
     }
 
+    /**
+     * Describe a page region target.
+     *
+     * @param \stdClass $step Step record.
+     * @return \stdClass Result object (see describe()).
+     */
     private static function page_region(\stdClass $step): \stdClass {
         if (empty($step->targetref)) {
             return self::result(false, get_string('target_missingref', 'local_unittours'));
@@ -147,6 +201,12 @@ final class target_resolver {
         return self::result(true, $step->targetref, get_string('target_page_region', 'local_unittours'));
     }
 
+    /**
+     * Describe a CSS selector target (cannot be verified server side).
+     *
+     * @param \stdClass $step Step record.
+     * @return \stdClass Result object (see describe()).
+     */
     private static function selector(\stdClass $step): \stdClass {
         if (empty($step->targetref) && empty($step->fallbackselector)) {
             return self::result(false, get_string('target_missingref', 'local_unittours'));
@@ -160,6 +220,15 @@ final class target_resolver {
         );
     }
 
+    /**
+     * Build a result object.
+     *
+     * @param bool|null $found True if the target exists, false if missing, null if unverifiable.
+     * @param string $label Human-readable target label.
+     * @param string $type Human-readable target type.
+     * @param string $detail Optional extra detail shown under the health badge.
+     * @return \stdClass Result object.
+     */
     private static function result(?bool $found, string $label, string $type = '', string $detail = ''): \stdClass {
         return (object) [
             'found' => $found,

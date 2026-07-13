@@ -27,6 +27,33 @@ require_once(__DIR__ . '/../../config.php');
 use local_unittours\local\tour_repository;
 use local_unittours\local\target_resolver;
 
+/**
+ * Build an inline POST form that submits a step action (used for reordering).
+ *
+ * @param moodle_url $url Page URL the form posts back to.
+ * @param string $action Action name, e.g. 'movestepup'.
+ * @param int $stepid Step id.
+ * @param string $label Visible button label.
+ * @return string Form HTML.
+ */
+function local_unittours_step_action_form(moodle_url $url, string $action, int $stepid, string $label): string {
+    $output = html_writer::start_tag('form', [
+        'method' => 'post',
+        'action' => $url->out(false),
+        'class' => 'd-inline',
+    ]);
+    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => $action]);
+    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'stepid', 'value' => $stepid]);
+    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
+    $output .= html_writer::tag('button', $label, [
+        'type' => 'submit',
+        'class' => 'btn btn-link p-0 align-baseline',
+    ]);
+    $output .= html_writer::end_tag('form');
+
+    return $output;
+}
+
 $courseid = required_param('id', PARAM_INT);
 $tourid = required_param('tourid', PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHA);
@@ -48,12 +75,33 @@ $PAGE->set_pagelayout('incourse');
 $PAGE->set_title(format_string($tour->name, true, ['context' => $context]));
 $PAGE->set_heading($course->fullname);
 
-if ($action === 'deletestep' && $stepid && confirm_sesskey()) {
-    tour_repository::delete_step($stepid, $course->id);
-    redirect($url, get_string('stepdeleted', 'local_unittours'), null, \core\output\notification::NOTIFY_SUCCESS);
+if ($action === 'deletestep' && $stepid) {
+    $step = tour_repository::get_step($stepid, $course->id);
+
+    // Deletion only happens on a confirmed POST; the initial delete link is a safe GET
+    // that renders this confirmation page.
+    if (optional_param('confirm', 0, PARAM_BOOL) && data_submitted() && confirm_sesskey()) {
+        tour_repository::delete_step($stepid, $course->id);
+        redirect($url, get_string('stepdeleted', 'local_unittours'), null, \core\output\notification::NOTIFY_SUCCESS);
+    }
+
+    echo $OUTPUT->header();
+    $continueurl = new moodle_url($url, [
+        'action' => 'deletestep',
+        'stepid' => $stepid,
+        'confirm' => 1,
+        'sesskey' => sesskey(),
+    ]);
+    echo $OUTPUT->confirm(
+        get_string('deletestepconfirm', 'local_unittours', format_string($step->title, true, ['context' => $context])),
+        new single_button($continueurl, get_string('delete'), 'post'),
+        $url
+    );
+    echo $OUTPUT->footer();
+    exit;
 }
 
-if (($action === 'movestepup' || $action === 'movestepdown') && $stepid && confirm_sesskey()) {
+if (($action === 'movestepup' || $action === 'movestepdown') && $stepid && data_submitted() && confirm_sesskey()) {
     $direction = ($action === 'movestepup') ? 'up' : 'down';
     tour_repository::move_step($stepid, $course->id, $direction);
     redirect($url, get_string('steporderupdated', 'local_unittours'), null, \core\output\notification::NOTIFY_SUCCESS);
@@ -118,18 +166,14 @@ foreach ($steps as $step) {
     $deleteurl = new moodle_url($url, [
         'action' => 'deletestep',
         'stepid' => $step->id,
-        'sesskey' => sesskey(),
     ]);
-    $moveupurl = new moodle_url($url, [
-        'action' => 'movestepup',
-        'stepid' => $step->id,
-        'sesskey' => sesskey(),
-    ]);
-    $movedownurl = new moodle_url($url, [
-        'action' => 'movestepdown',
-        'stepid' => $step->id,
-        'sesskey' => sesskey(),
-    ]);
+    $moveupform = local_unittours_step_action_form($url, 'movestepup', (int) $step->id, get_string('moveup', 'local_unittours'));
+    $movedownform = local_unittours_step_action_form(
+        $url,
+        'movestepdown',
+        (int) $step->id,
+        get_string('movedown', 'local_unittours')
+    );
 
     $targetinfo = target_resolver::describe($step, $course);
     if ($targetinfo->found === true) {
@@ -162,8 +206,8 @@ foreach ($steps as $step) {
         $health,
         $audiostatus,
         get_string('placement_' . $step->placement, 'local_unittours'),
-        html_writer::link($moveupurl, get_string('moveup', 'local_unittours')) . ' | ' .
-            html_writer::link($movedownurl, get_string('movedown', 'local_unittours')) . ' | ' .
+        $moveupform . ' | ' .
+            $movedownform . ' | ' .
             html_writer::link($editurl, get_string('edit')) . ' | ' .
             html_writer::link($deleteurl, get_string('delete')),
     ];

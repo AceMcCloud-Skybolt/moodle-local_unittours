@@ -15,29 +15,18 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Unit tours plugin.
+ * Hook callback registrations for the unit tours plugin.
  *
  * @package    local_unittours
  * @copyright  2026 Murdoch University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace local_unittours;
+defined('MOODLE_INTERNAL') || die();
 
-/**
- * Event observers for the unit tours plugin.
- *
- * @package    local_unittours
- * @copyright  2026 Murdoch University
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class observer {
-    /**
-     * Remove all plugin data belonging to a deleted course.
-     *
-     * @param \core\event\course_deleted $event The course deleted event.
-     */
-    public static function course_deleted(\core\event\course_deleted $event): void {
-        \local_unittours\local\tour_repository::delete_course_data((int) $event->objectid);
-    }
-}
+$callbacks = [
+    [
+        'hook' => \core\hook\output\before_footer_html_generation::class,
+        'callback' => \local_unittours\hook\output\before_footer_html_generation::class . '::callback',
+    ],
+];

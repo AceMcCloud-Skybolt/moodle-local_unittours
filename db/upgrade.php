@@ -22,8 +22,12 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Upgrade the plugin database schema.
+ *
+ * @param int $oldversion Version being upgraded from.
+ * @return bool Always true.
+ */
 function xmldb_local_unittours_upgrade($oldversion): bool {
     global $DB;
 

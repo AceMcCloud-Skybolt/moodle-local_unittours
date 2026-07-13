@@ -24,24 +24,46 @@
 
 namespace local_unittours\event;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Event triggered when a user starts a unit tour.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class tour_started extends \core\event\base {
-
+    /**
+     * Initialise the event data.
+     */
     protected function init(): void {
         $this->data['crud'] = 'r';
         $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
         $this->data['objecttable'] = 'local_unittours_tours';
     }
 
+    /**
+     * Get the localised event name.
+     *
+     * @return string Event name.
+     */
     public static function get_name(): string {
         return get_string('event_tour_started', 'local_unittours');
     }
 
+    /**
+     * Get the non-localised event description.
+     *
+     * @return string Event description.
+     */
     public function get_description(): string {
         return "The user with id '{$this->userid}' started the unit tour with id '{$this->objectid}'.";
     }
 
+    /**
+     * Get the URL related to this event.
+     *
+     * @return \moodle_url Tour view URL.
+     */
     public function get_url(): \moodle_url {
         return new \moodle_url('/local/unittours/view.php', [
             'id' => $this->courseid,
@@ -49,6 +71,11 @@ class tour_started extends \core\event\base {
         ]);
     }
 
+    /**
+     * Describe how objectid is mapped during backup and restore.
+     *
+     * @return array Mapping definition.
+     */
     public static function get_objectid_mapping(): array {
         return [
             'db' => 'local_unittours_tours',

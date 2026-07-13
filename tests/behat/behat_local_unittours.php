@@ -29,7 +29,6 @@ use Behat\Mink\Exception\ExpectationException;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class behat_local_unittours extends behat_base {
-
     /**
      * Creates a one-step section-targeted unit tour.
      *

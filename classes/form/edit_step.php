@@ -31,8 +31,17 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->libdir . '/formslib.php');
 
+/**
+ * Form for creating and editing a tour step.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class edit_step extends \moodleform {
-
+    /**
+     * Define the step form fields.
+     */
     protected function definition(): void {
         $mform = $this->_form;
 

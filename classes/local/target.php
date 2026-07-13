@@ -24,14 +24,31 @@
 
 namespace local_unittours\local;
 
-defined('MOODLE_INTERNAL') || die();
-
+/**
+ * Constants for the step target types supported by the tour player.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 final class target {
+    /** @var string Step is not attached to any page element. */
     public const UNATTACHED = 'unattached';
+    /** @var string Step targets an activity or resource (targetref is a cmid). */
     public const COURSE_MODULE = 'course_module';
+
+    /** @var string Step targets a course section (targetref is a section id). */
     public const SECTION = 'section';
+
+    /** @var string Step targets a block instance (targetref is a block name). */
     public const BLOCK = 'block';
+
+    /** @var string Step targets an item in the course navigation (targetref is a nav key). */
     public const COURSE_NAVIGATION = 'course_navigation';
+
+    /** @var string Step targets a theme page region (targetref is a region name). */
     public const PAGE_REGION = 'page_region';
+
+    /** @var string Step targets an arbitrary CSS selector. */
     public const SELECTOR = 'selector';
 }

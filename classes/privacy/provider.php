@@ -35,10 +35,20 @@ use core_privacy\local\request\plugin\provider as requestprovider;
 use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
-defined('MOODLE_INTERNAL') || die();
-
-class provider implements metadataprovider, requestprovider, core_userlist_provider {
-
+/**
+ * Privacy provider exporting and deleting tour completion records.
+ *
+ * @package    local_unittours
+ * @copyright  2026 Murdoch University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class provider implements core_userlist_provider, metadataprovider, requestprovider {
+    /**
+     * Describe the personal data stored by the plugin.
+     *
+     * @param collection $collection Metadata collection to extend.
+     * @return collection The extended collection.
+     */
     public static function get_metadata(collection $collection): collection {
         $collection->add_database_table(
             'local_unittours_completion',
@@ -54,6 +64,12 @@ class provider implements metadataprovider, requestprovider, core_userlist_provi
         return $collection;
     }
 
+    /**
+     * Get the course contexts in which the user has tour completion data.
+     *
+     * @param int $userid User id.
+     * @return contextlist Contexts containing the user's data.
+     */
     public static function get_contexts_for_userid(int $userid): contextlist {
         $contextlist = new contextlist();
         $sql = "SELECT ctx.id
@@ -71,6 +87,11 @@ class provider implements metadataprovider, requestprovider, core_userlist_provi
         return $contextlist;
     }
 
+    /**
+     * Export the user's tour completion records for the approved contexts.
+     *
+     * @param approved_contextlist $contextlist Approved contexts to export for.
+     */
     public static function export_user_data(approved_contextlist $contextlist): void {
         global $DB;
 
@@ -104,6 +125,11 @@ class provider implements metadataprovider, requestprovider, core_userlist_provi
         }
     }
 
+    /**
+     * Delete all tour completion records in a context.
+     *
+     * @param context $context Context to purge.
+     */
     public static function delete_data_for_all_users_in_context(context $context): void {
         global $DB;
 
@@ -124,6 +150,11 @@ class provider implements metadataprovider, requestprovider, core_userlist_provi
         }
     }
 
+    /**
+     * Delete the user's tour completion records in the approved contexts.
+     *
+     * @param approved_contextlist $contextlist Approved contexts to delete from.
+     */
     public static function delete_data_for_user(approved_contextlist $contextlist): void {
         global $DB;
 
@@ -147,6 +178,11 @@ class provider implements metadataprovider, requestprovider, core_userlist_provi
         }
     }
 
+    /**
+     * Add the users who have tour completion data in a context.
+     *
+     * @param userlist $userlist User list to populate.
+     */
     public static function get_users_in_context(userlist $userlist): void {
         $context = $userlist->get_context();
         if ($context->contextlevel !== CONTEXT_COURSE) {
@@ -160,6 +196,11 @@ class provider implements metadataprovider, requestprovider, core_userlist_provi
         $userlist->add_from_sql('userid', $sql, ['courseid' => $context->instanceid]);
     }
 
+    /**
+     * Delete tour completion records for the approved users in a context.
+     *
+     * @param approved_userlist $userlist Approved users to delete data for.
+     */
     public static function delete_data_for_users(approved_userlist $userlist): void {
         global $DB;
 
