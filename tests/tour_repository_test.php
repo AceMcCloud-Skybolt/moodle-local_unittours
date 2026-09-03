@@ -31,8 +31,6 @@ use local_unittours\local\tour_repository;
 
 /**
  * Repository integration tests.
- *
- * @covers \local_unittours\local\tour_repository
  */
 final class tour_repository_test extends advanced_testcase {
     /**
@@ -89,6 +87,7 @@ final class tour_repository_test extends advanced_testcase {
         $this->resetAfterTest();
         $course = $this->getDataGenerator()->create_course();
         $student = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
         $groupa = $this->getDataGenerator()->create_group(['courseid' => $course->id]);
         $groupb = $this->getDataGenerator()->create_group(['courseid' => $course->id]);
         groups_add_member($groupa, $student);

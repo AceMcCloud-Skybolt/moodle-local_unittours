@@ -23,6 +23,9 @@ if (-not (Test-Path $PhpExe)) {
 
 Write-Host "Running backup for course $SourceCourseId..."
 & $PhpExe "$MoodleRoot\admin\cli\backup.php" --courseid=$SourceCourseId --destination="$backupDir"
+if ($LASTEXITCODE -ne 0) {
+    throw "Course backup failed with exit code $LASTEXITCODE."
+}
 
 $mbz = Get-ChildItem $backupDir -Filter *.mbz | Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if (-not $mbz) {
@@ -31,6 +34,9 @@ if (-not $mbz) {
 
 Write-Host "Restoring $($mbz.FullName) into category $TargetCategoryId..."
 & $PhpExe "$MoodleRoot\admin\cli\restore_backup.php" --file="$($mbz.FullName)" --categoryid=$TargetCategoryId
+if ($LASTEXITCODE -ne 0) {
+    throw "Course restore failed with exit code $LASTEXITCODE."
+}
 
 $checkScript = @'
 <?php
