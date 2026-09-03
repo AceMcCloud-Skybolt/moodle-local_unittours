@@ -44,7 +44,7 @@ $PAGE->set_pagelayout('incourse');
 $PAGE->set_title(get_string('manageunittours', 'local_unittours'));
 $PAGE->set_heading($course->fullname);
 
-if ($action === 'createtour' && confirm_sesskey()) {
+if ($action === 'createtour' && data_submitted() && confirm_sesskey()) {
     $newtourid = tour_repository::create_draft_tour($course->id);
     redirect(
         new moodle_url('/local/unittours/view.php', ['id' => $course->id, 'tourid' => $newtourid]),
@@ -82,43 +82,9 @@ if ($action === 'deletetour' && $tourid) {
 
 $tours = tour_repository::get_tours_for_course($course->id);
 $stepcounts = tour_repository::get_step_counts_for_course($course->id);
+$renderer = $PAGE->get_renderer('local_unittours');
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('manageunittours', 'local_unittours'));
-
-$createurl = new moodle_url($url, ['action' => 'createtour', 'sesskey' => sesskey()]);
-echo $OUTPUT->single_button($createurl, get_string('createtour', 'local_unittours'), 'post');
-
-if (empty($tours)) {
-    echo $OUTPUT->notification(get_string('notours', 'local_unittours'), \core\output\notification::NOTIFY_INFO);
-    echo $OUTPUT->footer();
-    exit;
-}
-
-$table = new html_table();
-$table->head = [
-    get_string('tourname', 'local_unittours'),
-    get_string('status', 'local_unittours'),
-    get_string('steps', 'local_unittours'),
-    get_string('actions'),
-];
-
-foreach ($tours as $tour) {
-    $viewurl = new moodle_url('/local/unittours/view.php', ['id' => $course->id, 'tourid' => $tour->id]);
-    $editurl = new moodle_url('/local/unittours/edit_tour.php', ['id' => $course->id, 'tourid' => $tour->id]);
-    $deleteurl = new moodle_url($url, [
-        'action' => 'deletetour',
-        'tourid' => $tour->id,
-    ]);
-
-    $table->data[] = [
-        html_writer::link($viewurl, format_string($tour->name, true, ['context' => $context])),
-        $tour->enabled ? get_string('enabled', 'local_unittours') : get_string('disabled', 'local_unittours'),
-        $stepcounts[(int) $tour->id] ?? 0,
-        html_writer::link($editurl, get_string('edit')) . ' | ' .
-            html_writer::link($deleteurl, get_string('delete')),
-    ];
-}
-
-echo html_writer::table($table);
+echo $renderer->manage_page($tours, $stepcounts, $course, $context);
 echo $OUTPUT->footer();

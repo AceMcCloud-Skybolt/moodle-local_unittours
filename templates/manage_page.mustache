@@ -1,0 +1,24 @@
+{{!
+    @template local_unittours/manage_page
+}}
+<div class="local-unittours-manage">
+    <div class="mb-3">{{{createbutton}}}</div>
+    {{#hasrows}}
+        <div class="table-responsive">
+            <table class="table generaltable">
+                <thead><tr><th>{{tourname}}</th><th>{{statuslabel}}</th><th>{{stepslabel}}</th><th>{{actionslabel}}</th></tr></thead>
+                <tbody>
+                {{#rows}}
+                    <tr>
+                        <td><a href="{{viewurl}}">{{{name}}}</a></td>
+                        <td>{{status}}</td>
+                        <td>{{stepcount}}</td>
+                        <td><a href="{{editurl}}">{{editlabel}}</a> | <a href="{{deleteurl}}">{{deletelabel}}</a></td>
+                    </tr>
+                {{/rows}}
+                </tbody>
+            </table>
+        </div>
+    {{/hasrows}}
+    {{^hasrows}}<div class="alert alert-info">{{notours}}</div>{{/hasrows}}
+</div>

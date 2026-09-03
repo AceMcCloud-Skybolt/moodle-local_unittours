@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_unittours';
-$plugin->version = 2026071300;
+$plugin->version = 2026090300;
 $plugin->requires = 2024100700;
 $plugin->supported = [405, 501];
 $plugin->maturity = MATURITY_ALPHA;
-$plugin->release = '0.1.1';
+$plugin->release = '0.2.0';

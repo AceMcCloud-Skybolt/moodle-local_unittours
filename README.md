@@ -34,6 +34,8 @@ The plugin is intended to solve the limitations of native Moodle User tours for 
 - Supports semantic course navigation targets such as Grades and Participants.
 - Includes basic keyboard/focus handling for the student-facing tour dialog.
 - Logs tour started, completed, and skipped events to Moodle's standard event log.
+- Uses theme-overridable Mustache templates and a plugin renderer for staff management views.
+- Uses modern ES module source for the player and visual target picker.
 
 ## Screenshots
 
@@ -88,6 +90,21 @@ $env:PATH = 'D:\server\php;' + $env:PATH
 php D:\server\moodle\public\admin\tool\behat\cli\init.php
 php D:\server\moodle\public\admin\tool\behat\cli\run.php --tags="@local_unittours"
 ```
+
+## PHPUnit
+
+Repository tests cover step reordering boundaries, repeat completion writes and validation, and group-audience filtering:
+
+```powershell
+php D:\server\moodle\public\admin\tool\phpunit\cli\init.php
+php D:\server\moodle\vendor\bin\phpunit --testsuite local_unittours_testsuite
+```
+
+## Catalyst Review
+
+The July 2026 Catalyst IT review findings have been addressed in release 0.2.0. This includes PHPDoc coverage,
+POST-only state changes, query batching, Moodle 5.1 hook registration, speech text entity decoding,
+theme-overridable output, modern AMD source, and repository PHPUnit coverage.
 
 ## Backup/Restore Smoke Test
 

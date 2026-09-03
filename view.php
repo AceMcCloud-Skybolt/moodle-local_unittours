@@ -25,34 +25,6 @@
 require_once(__DIR__ . '/../../config.php');
 
 use local_unittours\local\tour_repository;
-use local_unittours\local\target_resolver;
-
-/**
- * Build an inline POST form that submits a step action (used for reordering).
- *
- * @param moodle_url $url Page URL the form posts back to.
- * @param string $action Action name, e.g. 'movestepup'.
- * @param int $stepid Step id.
- * @param string $label Visible button label.
- * @return string Form HTML.
- */
-function local_unittours_step_action_form(moodle_url $url, string $action, int $stepid, string $label): string {
-    $output = html_writer::start_tag('form', [
-        'method' => 'post',
-        'action' => $url->out(false),
-        'class' => 'd-inline',
-    ]);
-    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => $action]);
-    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'stepid', 'value' => $stepid]);
-    $output .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
-    $output .= html_writer::tag('button', $label, [
-        'type' => 'submit',
-        'class' => 'btn btn-link p-0 align-baseline',
-    ]);
-    $output .= html_writer::end_tag('form');
-
-    return $output;
-}
 
 $courseid = required_param('id', PARAM_INT);
 $tourid = required_param('tourid', PARAM_INT);
@@ -107,111 +79,15 @@ if (($action === 'movestepup' || $action === 'movestepdown') && $stepid && data_
     redirect($url, get_string('steporderupdated', 'local_unittours'), null, \core\output\notification::NOTIFY_SUCCESS);
 }
 
-if ($action === 'resetmycompletion' && confirm_sesskey()) {
+if ($action === 'resetmycompletion' && data_submitted() && confirm_sesskey()) {
     tour_repository::clear_completion($tour->id, $course->id, $USER->id);
     redirect($url, get_string('mycompletionreset', 'local_unittours'), null, \core\output\notification::NOTIFY_SUCCESS);
 }
 
 $steps = tour_repository::get_steps_for_tour($tour->id);
+$renderer = $PAGE->get_renderer('local_unittours');
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($tour->name, true, ['context' => $context]));
-
-$buttons = [
-    html_writer::link(
-        new moodle_url('/local/unittours/edit_tour.php', ['id' => $course->id, 'tourid' => $tour->id]),
-        get_string('edittour', 'local_unittours'),
-        ['class' => 'btn btn-secondary']
-    ),
-    html_writer::link(
-        new moodle_url('/local/unittours/edit_step.php', ['id' => $course->id, 'tourid' => $tour->id]),
-        get_string('addstep', 'local_unittours'),
-        ['class' => 'btn btn-primary']
-    ),
-    html_writer::link(
-        new moodle_url($url, ['action' => 'resetmycompletion', 'sesskey' => sesskey()]),
-        get_string('resetmycompletion', 'local_unittours'),
-        ['class' => 'btn btn-secondary']
-    ),
-];
-echo html_writer::div(implode(' ', $buttons), 'mb-3');
-
-if (!empty($tour->description)) {
-    echo $OUTPUT->box(format_text($tour->description, $tour->descriptionformat, ['context' => $context]));
-}
-
-if (empty($steps)) {
-    echo $OUTPUT->notification(get_string('nosteps', 'local_unittours'), \core\output\notification::NOTIFY_INFO);
-    echo $OUTPUT->footer();
-    exit;
-}
-
-$table = new html_table();
-$table->head = [
-    get_string('steptitle', 'local_unittours'),
-    get_string('targettype', 'local_unittours'),
-    get_string('targetlabel', 'local_unittours'),
-    get_string('targethealth', 'local_unittours'),
-    get_string('audiostatus', 'local_unittours'),
-    get_string('placement', 'local_unittours'),
-    get_string('actions'),
-];
-
-foreach ($steps as $step) {
-    $editurl = new moodle_url('/local/unittours/edit_step.php', [
-        'id' => $course->id,
-        'tourid' => $tour->id,
-        'stepid' => $step->id,
-    ]);
-    $deleteurl = new moodle_url($url, [
-        'action' => 'deletestep',
-        'stepid' => $step->id,
-    ]);
-    $moveupform = local_unittours_step_action_form($url, 'movestepup', (int) $step->id, get_string('moveup', 'local_unittours'));
-    $movedownform = local_unittours_step_action_form(
-        $url,
-        'movestepdown',
-        (int) $step->id,
-        get_string('movedown', 'local_unittours')
-    );
-
-    $targetinfo = target_resolver::describe($step, $course);
-    if ($targetinfo->found === true) {
-        $health = html_writer::span(get_string('targetfound', 'local_unittours'), 'badge badge-success');
-    } else if ($targetinfo->found === false) {
-        $health = html_writer::span(get_string('targetneedsattention', 'local_unittours'), 'badge badge-danger');
-    } else {
-        $health = html_writer::span(get_string('targetunchecked', 'local_unittours'), 'badge badge-secondary');
-    }
-    if (!empty($targetinfo->detail)) {
-        $health .= html_writer::div($targetinfo->detail, 'small text-muted mt-1');
-    }
-
-    if (empty($step->audioenabled)) {
-        $audiostatus = html_writer::span(get_string('audiooff', 'local_unittours'), 'badge badge-secondary');
-    } else if (trim((string)($step->audiotext ?? '')) === '') {
-        $audiostatus = html_writer::span(get_string('audioneedstext', 'local_unittours'), 'badge badge-warning');
-    } else {
-        $audiolabel = get_string('audioonbrowserdependent', 'local_unittours');
-        if (!empty($step->audiolang)) {
-            $audiolabel .= ' (' . s($step->audiolang) . ')';
-        }
-        $audiostatus = html_writer::span($audiolabel, 'badge badge-info');
-    }
-
-    $table->data[] = [
-        format_string($step->title, true, ['context' => $context]),
-        get_string('target_' . $step->targettype, 'local_unittours'),
-        s($targetinfo->label),
-        $health,
-        $audiostatus,
-        get_string('placement_' . $step->placement, 'local_unittours'),
-        $moveupform . ' | ' .
-            $movedownform . ' | ' .
-            html_writer::link($editurl, get_string('edit')) . ' | ' .
-            html_writer::link($deleteurl, get_string('delete')),
-    ];
-}
-
-echo html_writer::table($table);
+echo $renderer->tour_page($tour, $steps, $course, $context);
 echo $OUTPUT->footer();

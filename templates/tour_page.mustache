@@ -1,0 +1,28 @@
+{{!
+    @template local_unittours/tour_page
+}}
+<div class="local-unittours-detail">
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a class="btn btn-secondary" href="{{editurl}}">{{edittour}}</a>
+        <a class="btn btn-primary" href="{{addstepurl}}">{{addstep}}</a>
+        {{{resetbutton}}}
+    </div>
+    {{#description}}<div class="box py-3 generalbox">{{{description}}}</div>{{/description}}
+    {{#hasrows}}
+        <div class="table-responsive">
+            <table class="table generaltable">
+                <thead><tr><th>{{steptitle}}</th><th>{{targettypeheader}}</th><th>{{targetlabelheader}}</th><th>{{targethealthheader}}</th><th>{{audiostatusheader}}</th><th>{{placementheader}}</th><th>{{actionslabel}}</th></tr></thead>
+                <tbody>
+                {{#rows}}
+                    <tr>
+                        <td>{{{title}}}</td><td>{{targettype}}</td><td>{{targetlabel}}</td>
+                        <td>{{{targethealth}}}</td><td>{{{audiostatus}}}</td><td>{{placement}}</td>
+                        <td class="text-nowrap">{{{moveup}}} {{{movedown}}} <a href="{{editurl}}">{{editlabel}}</a> | <a href="{{deleteurl}}">{{deletelabel}}</a></td>
+                    </tr>
+                {{/rows}}
+                </tbody>
+            </table>
+        </div>
+    {{/hasrows}}
+    {{^hasrows}}<div class="alert alert-info">{{nosteps}}</div>{{/hasrows}}
+</div>
