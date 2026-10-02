@@ -12,6 +12,7 @@ This is compatibility evidence, not production certification. The institution's 
 - Literal language-string references were checked against the installed Moodle 5.1 string manager; no missing references remain. Dynamic identifiers need workflow testing too.
 - The saved final PHPUnit report confirms the Unit Tours suite passed: 4 tests, 10 assertions, zero failures, errors or skipped tests, including the management-screen renderer test.
 - Template lint on Windows encountered an upstream mixed-path-separator limitation; Linux GitHub Actions runs the installed-plugin template checks.
+- GitHub Actions run 36947755256 confirmed installation, PHP lint, structure, savepoints, coding standard, PHPDoc and PHPUnit passed on Linux against Moodle 5.1.7+ on both PHP 8.2 and 8.3. Template lint flagged missing example contexts in both staff templates; example data has been added and requires a follow-up CI run.
 
 ## Changes
 

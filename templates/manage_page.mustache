@@ -1,5 +1,19 @@
 {{!
     @template local_unittours/manage_page
+
+    Example context (json):
+    {
+        "createbutton": "<button type=\"button\" class=\"btn btn-primary\">Create tour</button>",
+        "hasrows": true,
+        "tourname": "Tour name",
+        "statuslabel": "Status",
+        "stepslabel": "Steps",
+        "actionslabel": "Actions",
+        "editlabel": "Edit",
+        "deletelabel": "Delete",
+        "notours": "No tours",
+        "rows": [{"name": "Welcome", "viewurl": "#", "status": "Enabled", "stepcount": 1, "editurl": "#", "deleteurl": "#"}]
+    }
 }}
 <div class="local-unittours-manage">
     <div class="mb-3">{{{createbutton}}}</div>
