@@ -153,3 +153,5 @@ This creates a temporary tour, verifies activity, section, navigation, missing-t
 ## Compatibility Notes
 
 - [Moodle 5.1 compatibility review](docs/moodle-5.1-compatibility-review.md)
+- [Moodle 5.1 upgrade UAT smoke checklist](docs/moodle-5.1-uat-smoke-checklist.md)
+- [Executed Moodle 5.1 validation and remaining checks](docs/release-validation-2026-09-03.md)
