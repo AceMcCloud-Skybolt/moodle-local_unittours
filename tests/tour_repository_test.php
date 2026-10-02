@@ -34,6 +34,26 @@ use local_unittours\local\tour_repository;
  */
 final class tour_repository_test extends advanced_testcase {
     /**
+     * The management screen renders through Moodle's plugin renderer and templates.
+     */
+    public function test_management_screen_renders(): void {
+        global $PAGE;
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+        $course = $this->getDataGenerator()->create_course();
+        $context = \context_course::instance($course->id);
+        $PAGE->set_course($course);
+        $PAGE->set_context($context);
+        $PAGE->set_url('/local/unittours/manage.php', ['id' => $course->id]);
+        $renderer = $PAGE->get_renderer('local_unittours');
+        $html = $renderer->manage_page([], [], $course, $context);
+
+        $this->assertStringContainsString('createtour', $html);
+        $this->assertDoesNotMatchRegularExpression('/\[\[[^\]]+\]\]/', $html);
+    }
+
+    /**
      * Step moves respect boundaries and swap adjacent positions.
      */
     public function test_move_step_boundaries_and_reordering(): void {

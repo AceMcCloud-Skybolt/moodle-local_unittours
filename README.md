@@ -1,5 +1,7 @@
 # Unit tours
 
+Moodle 5.1 readiness: [2 October 2026 compatibility review and rollout checks](docs/moodle-5.1-review-2026-10-02.md).
+
 `local_unittours` is an early Moodle plugin prototype for course-owned student tours.
 
 Minimum Moodle version: 4.5 (`$plugin->requires = 2024100700`). The current development and compatibility review environment is Moodle 5.1.4+.
